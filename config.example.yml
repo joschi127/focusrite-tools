@@ -4,6 +4,7 @@ network:
   - 49152
   - 50000
   timeout: 0.02
+  last_successful_port: null
 routing:
   playback_only:
   - <client_command type="assign_source" output="line_output_1" source="daw_output_1"/>

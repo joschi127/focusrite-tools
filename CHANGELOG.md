@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Robust TCP communication: implemented clearing of the initial greeting buffer and waiting for server responses for each command, porting logic from `test_send_snapshot.py`.
+- Caching of the last successful TCP port to `config.yml` to speed up future server discovery.
+- `last_successful_port` configuration key under the `network` section.
 - config.example.yml with default values.
 - Default execution mode `playback_only` when no command-line arguments are provided.
 - Added YAML configuration support via `config.yml`.

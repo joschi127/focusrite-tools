@@ -17,7 +17,8 @@ DEFAULT_CONFIG = {
     "network": {
         "host": "127.0.0.1",
         "port_range": [49152, 50000],
-        "timeout": 0.02
+        "timeout": 0.02,
+        "last_successful_port": None
     },
     "routing": {
         "playback_only": [
@@ -36,6 +37,14 @@ APP_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
 CONFIG_FILE_PATH = os.path.join(APP_DIR, "config.yml")
 LOG_FILE_PATH = os.path.join(APP_DIR, "error.log")
 
+def save_config(config):
+    """Saves the current configuration to the YAML file."""
+    try:
+        with open(CONFIG_FILE_PATH, "w", encoding="utf-8") as f:
+            yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+    except Exception:
+        pass
+
 def load_config():
     """Loads config from YAML, merges with defaults, and saves if changes were made."""
     config = DEFAULT_CONFIG.copy()
@@ -49,7 +58,7 @@ def load_config():
             # Deep merge logic for the two-level dictionary
             for section, values in DEFAULT_CONFIG.items():
                 if section not in loaded_config:
-                    loaded_config[section] = values
+                    loaded_config[section] = values.copy()
                     updated = True
                 else:
                     for key, val in values.items():
@@ -57,19 +66,14 @@ def load_config():
                             loaded_config[section][key] = val
                             updated = True
             config = loaded_config
-        except Exception as e:
-            # If config is corrupted, we'll log it but proceed with defaults
-            # (In a real app, maybe we'd want to notify the user)
+        except Exception:
+            # If config is corrupted, we'll proceed with defaults
             pass
     else:
         updated = True
 
     if updated:
-        try:
-            with open(CONFIG_FILE_PATH, "w", encoding="utf-8") as f:
-                yaml.dump(config, f, default_flow_style=False, sort_keys=False)
-        except Exception:
-            pass
+        save_config(config)
     
     return config
 
@@ -102,8 +106,22 @@ def log_error_and_exit(message):
 
 
 def find_active_server_port():
+    last_port = CONFIG["network"].get("last_successful_port")
+    if last_port:
+        print(f"Trying last successful port: {last_port}...")
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(TIMEOUT)
+                if s.connect_ex((HOST, last_port)) == 0:
+                    print(f" -> Found Focusrite Control Server on cached port {last_port}")
+                    return last_port
+        except Exception:
+            pass
+
     print(f"Scanning local TCP ports {PORT_START}-{PORT_END}...")
     for port in range(PORT_START, PORT_END + 1):
+        if port == last_port:
+            continue
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(TIMEOUT)
@@ -122,18 +140,43 @@ def execute_tcp_stream(port, command_list, should_flash=False):
             s.settimeout(3.0)
             s.connect((HOST, port))
             
+            # Focusrite servers often dump their current state immediately upon connection.
+            # We set a non-blocking temporary window to flush out any initial greeting data.
+            s.setblocking(False)
+            try:
+                time.sleep(0.1)
+                s.recv(8192)  # Clear the initial greeting buffer
+            except BlockingIOError:
+                pass
+            s.setblocking(True)
+            
             for cmd in command_list:
                 # Generate strict length-prefix packet framing with trailing delimiter
                 payload = f"Length={len(cmd):06d} {cmd}\n"
                 print(f"Sending Matrix Payload: {cmd}")
                 s.sendall(payload.encode('utf-8'))
-                time.sleep(0.05) # Brief gap to prevent packet collisions
+                
+                # Await server processing and response
+                time.sleep(0.1)
+                try:
+                    response = s.recv(4096).decode('utf-8', errors='ignore')
+                    if response:
+                        print(f" -> Server Response: {response.strip()}")
+                except socket.timeout:
+                    pass
                 
             if should_flash:
                 flash_payload = f"Length={len(FLASH_HARDWARE_COMMAND):06d} {FLASH_HARDWARE_COMMAND}\n"
                 print("Sending non-volatile hardware save flash...")
                 s.sendall(flash_payload.encode('utf-8'))
-                time.sleep(0.1)
+                
+                time.sleep(0.2)
+                try:
+                    response = s.recv(4096).decode('utf-8', errors='ignore')
+                    if response:
+                        print(f" -> Server Response: {response.strip()}")
+                except socket.timeout:
+                    pass
                 
     except Exception as e:
         log_error_and_exit(f"Failed to transmit data to server on port {port}. Error: {str(e)}")
@@ -143,6 +186,11 @@ def execute_routing(mode):
     port = find_active_server_port()
     if not port:
         log_error_and_exit("Could not detect an active Focusrite Control Server instance.")
+
+    # Save port to config if it's new
+    if port != CONFIG["network"].get("last_successful_port"):
+        CONFIG["network"]["last_successful_port"] = port
+        save_config(CONFIG)
 
     if mode == "playback_only":
         print("Switching matrix to Playback Only configuration...")
