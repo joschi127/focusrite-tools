@@ -2,36 +2,88 @@ import sys
 import os
 import socket
 import time
-import win32gui
-import win32con
+import yaml
+try:
+    import win32gui
+    import win32con
+    HAS_WIN32 = True
+except ImportError:
+    HAS_WIN32 = False
 
 # ==============================================================================
-# CONFIGURATION & CONSTANTS
+# CONFIGURATION DEFAULTS
 # ==============================================================================
-HOST = "127.0.0.1"
-PORT_START = 49152
-PORT_END = 50000  # Captures your active port 49673
-TIMEOUT = 0.02
+DEFAULT_CONFIG = {
+    "network": {
+        "host": "127.0.0.1",
+        "port_range": [49152, 50000],
+        "timeout": 0.02
+    },
+    "routing": {
+        "playback_only": [
+            '<client_command type="assign_source" output="line_output_1" source="daw_output_1"/>',
+            '<client_command type="assign_source" output="line_output_2" source="daw_output_2"/>'
+        ],
+        "standalone": [
+            '<client_command type="assign_source" output="line_output_1" source="analogue_input_1"/>',
+            '<client_command type="assign_source" output="line_output_2" source="analogue_input_2"/>'
+        ],
+        "flash_command": '<client_command type="flash_hardware"/>'
+    }
+}
 
 APP_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
+CONFIG_FILE_PATH = os.path.join(APP_DIR, "config.yml")
 LOG_FILE_PATH = os.path.join(APP_DIR, "error.log")
 
-# ==============================================================================
-# ROUTING COMMAND ARRAYS (Direct TCP Strings)
-# ==============================================================================
-# Mode 1: PLAYBACK ONLY (Routes computer audio only, mutes physical hardware inputs)
-PLAYBACK_ONLY_COMMANDS = [
-    '<client_command type="assign_source" output="line_output_1" source="daw_output_1"/>',
-    '<client_command type="assign_source" output="line_output_2" source="daw_output_2"/>'
-]
+def load_config():
+    """Loads config from YAML, merges with defaults, and saves if changes were made."""
+    config = DEFAULT_CONFIG.copy()
+    updated = False
 
-# Mode 2: STANDALONE (Routes physical hardware inputs directly to your main speakers)
-STANDALONE_COMMANDS = [
-    '<client_command type="assign_source" output="line_output_1" source="analogue_input_1"/>',
-    '<client_command type="assign_source" output="line_output_2" source="analogue_input_2"/>'
-]
+    if os.path.exists(CONFIG_FILE_PATH):
+        try:
+            with open(CONFIG_FILE_PATH, "r", encoding="utf-8") as f:
+                loaded_config = yaml.safe_load(f) or {}
+            
+            # Deep merge logic for the two-level dictionary
+            for section, values in DEFAULT_CONFIG.items():
+                if section not in loaded_config:
+                    loaded_config[section] = values
+                    updated = True
+                else:
+                    for key, val in values.items():
+                        if key not in loaded_config[section]:
+                            loaded_config[section][key] = val
+                            updated = True
+            config = loaded_config
+        except Exception as e:
+            # If config is corrupted, we'll log it but proceed with defaults
+            # (In a real app, maybe we'd want to notify the user)
+            pass
+    else:
+        updated = True
 
-FLASH_HARDWARE_COMMAND = '<client_command type="flash_hardware"/>'
+    if updated:
+        try:
+            with open(CONFIG_FILE_PATH, "w", encoding="utf-8") as f:
+                yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+        except Exception:
+            pass
+    
+    return config
+
+# Load active configuration
+CONFIG = load_config()
+
+# Helper accessors for clarity
+HOST = CONFIG["network"]["host"]
+PORT_START, PORT_END = CONFIG["network"]["port_range"]
+TIMEOUT = CONFIG["network"]["timeout"]
+
+PLAYBACK_ONLY_COMMANDS = CONFIG["routing"]["playback_only"]
+STANDALONE_COMMANDS = CONFIG["routing"]["standalone"]
+FLASH_HARDWARE_COMMAND = CONFIG["routing"]["flash_command"]
 # ==============================================================================
 
 def log_error_and_exit(message):
@@ -42,7 +94,10 @@ def log_error_and_exit(message):
             f.write(formatted_msg)
     except Exception:
         pass
-    win32gui.MessageBox(0, message, "Focusrite Switcher Error", win32con.MB_ICONERROR | win32con.MB_OK)
+    if HAS_WIN32:
+        win32gui.MessageBox(0, message, "Focusrite Switcher Error", win32con.MB_ICONERROR | win32con.MB_OK)
+    else:
+        print(f"UI NOTIFICATION (Simulated): {message}")
     sys.exit(1)
 
 
@@ -99,10 +154,14 @@ def execute_routing(mode):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2 or sys.argv[1] not in ["playback_only", "standalone"]:
-        log_error_and_exit("Invalid or missing execution argument structure.")
+    mode = "playback_only"
+    if len(sys.argv) >= 2:
+        if sys.argv[1] in ["playback_only", "standalone"]:
+            mode = sys.argv[1]
+        else:
+            log_error_and_exit(f"Invalid execution argument: {sys.argv[1]}")
         
     try:
-        execute_routing(sys.argv[1])
+        execute_routing(mode)
     except Exception as e:
         log_error_and_exit(f"An unexpected runtime exception occurred:\n{str(e)}")
