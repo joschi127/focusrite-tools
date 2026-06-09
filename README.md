@@ -42,7 +42,7 @@ If you downloaded or cloned this repository onto a network share or network driv
 3. Right-click on **Command Prompt** and select **"Run as Administrator"**.
 
 ### 3. Install Prerequisites & Run Installer
-Navigate to your local folder inside the terminal window, install the required packages into the Administrator context, and execute the setup script (replace the path in the first command with your actual local directory path):
+Navigate to your local folder inside the terminal window, set up a virtual environment, install the required packages, and execute the setup script (replace the path in the first command with your actual local directory path):
 
 ```cmd
 cd /d "C:\Program Files\Focusrite\Focusrite Control\Server"
@@ -51,6 +51,8 @@ AddFirewallException.cmd
 :: restart might be needed
 
 cd /d "C:\Users\username\Downloads\focusrite_switcher"
+python -m venv venv
+venv\Scripts\activate
 pip install -r requirements.txt
 python install.py
 ```

@@ -12,7 +12,7 @@
 - **Code Style:** Maintain uniform formatting and clear naming conventions for variables and functions, following the existing patterns in `focusrite_switcher.py`.
 
 ## Technical Specifications
-- **Language & Runtime:** Python 3.x, compiled to a windowless executable using PyInstaller (`--onefile --noconsole`).
+- **Language & Runtime:** Python 3.x, recommended to run within a virtual environment (`venv`). Compiled to a windowless executable using PyInstaller (`--onefile --noconsole`).
 - **Target OS:** Windows (utilizes `win32gui`, `win32con`, and Windows Task Scheduler).
 - **Network Communication:**
     - Host: `127.0.0.1` (local Focusrite Control Server).

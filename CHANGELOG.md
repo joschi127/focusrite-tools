@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Python virtual environment (`venv`) support for isolated dependency management.
+- Detailed venv setup instructions in `README.md`.
+- Updated technical specifications in project guidelines to recommend `venv`.
 - Robust TCP communication: implemented clearing of the initial greeting buffer and waiting for server responses for each command, porting logic from `test_send_snapshot.py`.
 - Caching of the last successful TCP port to `config.yml` to speed up future server discovery.
 - `last_successful_port` configuration key under the `network` section.
@@ -20,9 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Created `CHANGELOG.md` to track project changes.
 - Updated `.junie/guidelines.md` (now `AGENTS.md`): translated to English and added detailed "Development Principles" and "Technical Specifications" based on the existing codebase and README.
 
+### Removed
+- Removed temporary `get-pip.py` bootstrap script and accidentally created files.
+
 ### Changed
 - Moved `config.yml` to `.gitignore` and added `config.example.yml` as a template.
 - Renamed `.junie/guidelines.md` to `.junie/AGENTS.md`.
+- Updated root `.gitignore` to use `/venv/` instead of `/.venv/` to match the project's virtual environment directory name.
 
 ### Fixed
 - Resolved `ModuleNotFoundError: No module named 'yaml'` by ensuring `PyYAML` is installed in the environment.
