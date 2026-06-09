@@ -22,14 +22,14 @@ it will automatically fall back to this configuration and is ready to be used wi
 ## Project Structure
 
 - `docs/` - Project documentation.
-    - `focusrite_control_api/` - Documentation of the Focusrite Control Server XML API.
+  - `focusrite_control_api/` - Documentation of the Focusrite Control Server XML API.
 - `tools/` - Contains individual Focusrite utilities.
-    - `send_test/` - Tool for testing communication with Focusrite Control Server.
-        - `focusrite_send_test.py` - Minimal script to send XML commands to the server.
-    - `switcher/` - The Focusrite Switcher tool.
-        - `focusrite_switcher.py` - Core automation script.
-        - `focusrite_client.py` - Focusrite Control Server API communication module.
-        - `install.py` - Automated installer script for Windows deployment.
+  - `send_test/` - Tool for testing communication with Focusrite Control Server.
+    - `focusrite_send_test.py` - Minimal script to send XML commands to the server.
+  - `switcher/` - The Focusrite Switcher tool.
+    - `focusrite_switcher.py` - Core automation script.
+    - `focusrite_client.py` - Focusrite Control Server API communication module.
+    - `install.py` - Automated installer script for Windows deployment.
 - `requirements.txt` - Project dependencies.
 - `README.md` - This instruction file.
 
