@@ -2,7 +2,6 @@ import sys
 import os
 import time
 import random
-from email import message
 
 import yaml
 
