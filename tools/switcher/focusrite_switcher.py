@@ -40,7 +40,7 @@ def load_config():
     """Loads config from YAML and merges with defaults from config.default.yml."""
     default_config = load_yaml(DEFAULT_CONFIG_FILE_PATH)
     loaded_config = load_yaml(CONFIG_FILE_PATH)
-    
+
     config = {}
 
     # Deep merge and handle '~' (None)
@@ -48,7 +48,7 @@ def load_config():
         if section not in config:
             config[section] = {}
         loaded_section = loaded_config.get(section, {})
-        
+
         for key, default_val in values.items():
             loaded_val = loaded_section.get(key)
             # If key is missing or explicitly set to None (~)
@@ -68,12 +68,12 @@ def load_config():
         elif section in config and not isinstance(config[section], dict):
              # If it's a top level key that's not a dict, it's already handled or should be preserved
              pass
-    
+
     # Ensure mandatory sections exist in config to avoid KeyError during initialization
     for section in ["network", "profiles"]:
         if section not in config:
             config[section] = default_config.get(section, {})
-    
+
     return config, loaded_config
 
 def ensure_client_key(config, loaded_config):
@@ -135,6 +135,14 @@ def execute_commands(port, command_list):
     All low-level server communication (correct length-prefix framing, handshake with `client-key`, the
     mandatory `<device-subscribe .. subscribe="true"/>` step and the receive loop) is handled by
     `FocusriteClient` in `focusrite_client.py`.
+
+    IMPORTANT: a `<set>` command does NOT produce its own reply - the server applies the change silently and
+    only reflects the new value in its periodic state dump. Therefore an empty response to a `<set>` is the
+    normal, successful case and must NOT be treated as an error (this is why the old per-command "No response
+    received" warning made a working switch look broken). After sending all commands we issue a single
+    `<keep-alive/>` to pull the resulting device state as confirmation. Some commands (notably routing-profile
+    changes via `<item id="6">`) make the server briefly reset the connection while it reconfigures, so a
+    dropped connection during the final confirmation is expected and is NOT treated as a failure.
     """
     try:
         with FocusriteClient(HOST, port, timeout=5.0, client_key=CLIENT_KEY) as client:
@@ -150,18 +158,24 @@ def execute_commands(port, command_list):
             # 2. Subscribe to the device. REQUIRED before the server accepts any <set> command.
             client.subscribe(devid="1")
 
-            # 3. Send the actual commands.
+            # 3. Send the actual commands. <set> commands intentionally return no direct response.
             for cmd in command_list:
                 if not cmd:
                     continue
 
                 print(f"Sending command: {cmd}")
-                cmd_response = client.send_command(cmd)
+                client.send_command(cmd)
 
-                if cmd_response:
-                    print(f" -> Server response received ({len(cmd_response)} bytes)")
+            # 4. Confirm by pulling the current device state via a keep-alive. A connection reset here is an
+            #    expected side effect of a routing-profile change, so we tolerate it instead of failing.
+            try:
+                state = client.keep_alive()
+                if state:
+                    print(f" -> Commands sent; received {len(state)} bytes of device state.")
                 else:
-                    show_warning(f"No response received for command: {cmd}")
+                    print(" -> Commands sent (no state dump returned by the server).")
+            except FocusriteClientError:
+                print(" -> Commands sent; the server reset the connection while reconfiguring (expected).")
 
     except (FocusriteClientError, Exception) as e:
         log_error_and_exit(f"Failed to transmit data to server on port {port}. Error: {str(e)}")
@@ -176,7 +190,7 @@ def switch_to_profile(profile_name):
     # Save port to config if it's new
     if port != CONFIG["network"].get("last_successful_port"):
         CONFIG["network"]["last_successful_port"] = port
-        
+
         # Also update LOADED_CONFIG to persist it without filling in defaults
         if "network" not in LOADED_CONFIG:
             LOADED_CONFIG["network"] = {}
@@ -192,7 +206,7 @@ def switch_to_profile(profile_name):
 
 
 if __name__ == "__main__":
-    mode = "routing_playback_only"
+    mode = "computer"
     if len(sys.argv) >= 2:
         mode = sys.argv[1]
 

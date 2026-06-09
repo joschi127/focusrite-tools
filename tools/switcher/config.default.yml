@@ -1,14 +1,16 @@
 network:
-  host: 127.0.0.1
-  port_range:
-    - 49670
-    - 50000
-  timeout: 0.02
-  last_successful_port: null
-  client_key: null
+    host: 127.0.0.1
+    port_range:
+        - 49670
+        - 50000
+    timeout: 0.02
+    last_successful_port: null
+    client_key: null
 profiles:
-  routing_playback_only:
-    - '<set devid="1"><item id="6" value="System Playback"/></set>'
-  routing_standalone:
-    - '<set devid="1"><item id="6" value="8 Channel Analogue"/></set>'
-    - '<client_command type="flash_hardware"/>'
+    computer:
+        - '<set devid="1"><item id="6" value="System Playback"/></set>'
+        # todo: remove flash_hardware command once this is working reliably
+        - '<client_command type="flash_hardware"/>'
+    standalone:
+        - '<set devid="1"><item id="6" value="8 Channel Analogue"/></set>'
+        - '<client_command type="flash_hardware"/>'

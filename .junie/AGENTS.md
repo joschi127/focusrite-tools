@@ -17,6 +17,9 @@
   `[Unreleased]` section.
 - **Code Style:** Maintain uniform formatting and clear naming conventions for variables and functions, following the
   existing patterns in `focusrite_switcher.py`.
+- **Indentation:** Use 4 spaces for indentation in **all** file types (`.md`, `.yml`/`.yaml`, `.xml`, `.py`). Do not
+  use tabs or 3-space (or 2-space) indentation. This is enforced via the root `.editorconfig`, so make sure your
+  editor has EditorConfig support enabled.
 - **Markdown Formatting:** All `.md` files must maintain a maximum line length of 120 characters.
 
 ## Technical Specifications

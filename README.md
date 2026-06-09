@@ -24,7 +24,7 @@ seamlessly handle transitions between active PC usage and standalone operations.
   - `switcher/` - The Focusrite Switcher tool.
     - `focusrite_switcher.py` - Core automation script.
     - `install.py` - Automated installer script for Windows deployment.
-  - `send_test/` - Tool for testing communication with Focusrite Control Server.
+    - `send_test/` - Tool for testing communication with Focusrite Control Server.
     - `focusrite_send_test.py` - Script to send XML commands to the server.
 - `requirements.txt` - Project dependencies.
 - `README.md` - This instruction file.
@@ -39,7 +39,7 @@ Scarlett's physical memory:
 
 1. Launch the official **Focusrite Control** desktop application.
 2. Configure your mixing layouts exactly how you want them to behave in standalone mode (e.g., load the built-in
-   **"8 Channel Analogue"** preset so all line inputs route straight to your main monitor outputs).
+    **"8 Channel Analogue"** preset so all line inputs route straight to your main monitor outputs).
 3. Close Focusrite Control. This will automatically write the current routing preference into the hardware's NVRAM.
 
 ---
@@ -63,24 +63,21 @@ execution directly from UNC network locations.
 Navigate to your local folder inside the terminal window, set up a virtual environment, install the required packages,
 and execute the setup script (replace the path in the first command with your actual local directory path):
 
-```cmd
-cd /d "C:\Program Files\Focusrite\Focusrite Control\Server"
-AddFirewallException.cmd
-AddFirewallException.cmd
-:: restart might be needed
-
-cd /d "C:\Users\username\Downloads\focusrite-tools\tools\switcher"
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r ../../requirements.txt
-python install.py
-```
+        cd /d "C:\Program Files\Focusrite\Focusrite Control\Server"
+        AddFirewallException.cmd
+        AddFirewallException.cmd
+        :: restart might be needed
+        
+        cd /d "C:\Users\username\Downloads\focusrite-tools\tools\switcher"
+        python -m venv .venv
+        .venv\Scripts\activate
+        pip install -r ../../requirements.txt
+        python install.py
 
 ### 4. Post-Installation Verification
 Open a standard Command Prompt window and execute the following command to manually trigger your new startup task:
-```cmd
-schtasks /run /tn "Focusrite_Playback_Startup"
-```
+
+        schtasks /run /tn "Focusrite_Playback_Startup"
 
 ---
 
@@ -101,10 +98,8 @@ For further details on the Focusrite Control protocol and XML structure, the fol
 ### Debian/Ubuntu (Development/Testing)
 On Debian-based systems, you can use the `venv` virtual environment setup by installing the `python3-venv` package:
 
-```bash
-sudo apt update
-sudo apt install python3-venv
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
+        sudo apt update
+        sudo apt install python3-venv
+        python3 -m venv .venv
+        source .venv/bin/activate
+        pip install -r requirements.txt

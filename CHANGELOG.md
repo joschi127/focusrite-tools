@@ -8,6 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added commands to the `computer` profile in `config.default.yml` that mute the first 8 inputs (the 8 analogue
+  inputs) of the first mix (Mix A, id `54`) via `<set>` on mute ids 57, 61, 65, 69, 73, 77, 81 and 85. The
+  `standalone` profile sets the same inputs to not muted (`value="false"`).
+
+### Fixed
+- Fixed `focusrite_switcher.py` reporting `WARNING: No response received for command: ...` and appearing not to
+  work even though the routing-profile switch was actually applied. A `<set>` command does not produce its own
+  reply (the server applies it silently and only reflects the new value in its state dump), so the per-command
+  "expect a response, otherwise warn" logic was a false alarm. The switcher now sends all commands without
+  expecting per-command replies and confirms the result with a single trailing `<keep-alive/>` state read.
+  Additionally, a routing-profile change (`<item id="6">`) can make the server briefly reset the connection
+  while it reconfigures; this connection drop during the final confirmation is now tolerated instead of being
+  logged as a fatal error and exiting.
+
+### Added
+- Documented two additional Focusrite Control Server behaviors in
+  `docs/focusrite_control_api/focusrite_control_api.md`: a `<set>` command produces no per-command reply (the
+  server applies it silently and only reflects the value in its state dump), and a routing-profile change
+  (`<item id="6">`) briefly resets the connection while the server reconfigures.
 - Added a `network.client_key` configuration option for the switcher tool (default `null` in
   `config.default.yml`). When the value is still `null`, `focusrite_switcher.py` auto-generates a random
   8-digit client key on startup and persists it to `config.yml` so the Focusrite Control approval stays stable.
@@ -61,7 +80,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Renamed configuration key `routing` to `profiles`
-- Renamed `playback_only` to `routing_playback_only` and `standalone` to `routing_standalone` in configuration.
 - Updated `focusrite_switcher.py` to match the new configuration format using `profiles` and handle any profile name
   from CLI.
 

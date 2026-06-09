@@ -98,7 +98,7 @@ class FocusriteClient:
 
     # -- Protocol steps ---------------------------------------------------------------------------------
 
-    def handshake(self, wait=0.5):
+    def handshake(self, wait=0.1):
         """Send the client-details handshake. Returns the (possibly empty) initial server response."""
         xml = '<client-details hostname="{}" client-key="{}"/>'.format(self.hostname, self.client_key)
         self._send(xml)
@@ -106,7 +106,7 @@ class FocusriteClient:
             time.sleep(wait)
         return self._drain()
 
-    def subscribe(self, devid="1", wait=0.5):
+    def subscribe(self, devid="1", wait=0.1):
         """Subscribe to a device. REQUIRED before the server accepts any `<set>` command for it."""
         xml = '<device-subscribe devid="{}" subscribe="true"/>'.format(devid)
         self._send(xml)
@@ -114,14 +114,14 @@ class FocusriteClient:
             time.sleep(wait)
         return self._drain()
 
-    def send_command(self, xml, wait=0.5, read_timeout=2.0):
+    def send_command(self, xml, wait=0.0, read_timeout=2.0):
         """Send a single raw XML command (e.g. a `<set>` element) and return the server response bytes."""
         self._send(xml)
         if wait:
             time.sleep(wait)
         return self._receive(read_timeout)
 
-    def keep_alive(self, wait=0.5, read_timeout=2.0):
+    def keep_alive(self, wait=0.1, read_timeout=2.0):
         """Send a bare `<keep-alive/>` element (also returns the current state dump from the server)."""
         return self.send_command('<keep-alive/>', wait=wait, read_timeout=read_timeout)
 

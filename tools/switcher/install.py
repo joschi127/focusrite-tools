@@ -32,13 +32,13 @@ def check_requirements():
 def compile_exe():
     """Compiles the python script into a single windowless executable using PyInstaller."""
     print(f"Step 1: Compiling {SCRIPT_NAME} using PyInstaller...")
-    
+
     try:
         import PyInstaller
     except ImportError:
         print("PyInstaller not detected. Installing via pip...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
-        
+
     cmd = [
         sys.executable, "-m", "PyInstaller",
         "--onefile",
@@ -48,7 +48,7 @@ def compile_exe():
         "--specpath", ".",
         SCRIPT_PATH
     ]
-    
+
     try:
         subprocess.check_call(cmd, stdout=subprocess.DEVNULL)
         print(" -> Successfully compiled to executable!")
@@ -61,12 +61,12 @@ def compile_exe():
 def deploy_exe():
     """Copies the compiled executable and required snapshot files to the Program Files directory."""
     print(f"Step 2: Deploying files to '{TARGET_DIR}'...")
-    
+
     src_path = os.path.join("dist", EXE_NAME)
     if not os.path.exists(src_path):
         print(f"Error: Compiled executable not found at '{src_path}'.")
         sys.exit(1)
-        
+
     try:
         os.makedirs(TARGET_DIR, exist_ok=True)
         shutil.copy2(src_path, EXE_PATH)
@@ -82,7 +82,7 @@ def create_startup_task():
         return
 
     print("Step 3: Registering Task Scheduler entry...")
-    
+
     try:
         scheduler = win32com.client.Dispatch('Schedule.Service')
         scheduler.Connect()
@@ -101,7 +101,7 @@ def create_startup_task():
         task_def.Settings.Enabled = True
         task_def.Settings.AllowDemandStart = True
         task_def.Settings.StartWhenAvailable = True
-        task_def.Settings.ExecutionTimeLimit = "PT1M" 
+        task_def.Settings.ExecutionTimeLimit = "PT1M"
 
         trigger = task_def.Triggers.Create(9) # TASK_TRIGGER_LOGON
         trigger.Id = "LogonTrigger"
@@ -110,7 +110,7 @@ def create_startup_task():
 
         action = task_def.Actions.Create(0) # TASK_ACTION_EXEC
         action.Path = EXE_PATH
-        action.Arguments = "routing_playback_only"
+        action.Arguments = "computer"
 
         principal = task_def.Principal
         principal.LogonType = 3  # TASK_LOGON_INTERACTIVE_TOKEN
@@ -119,13 +119,13 @@ def create_startup_task():
         root_folder.RegisterTaskDefinition(
             TASK_NAME,
             task_def,
-            6,  # TASK_CREATE_OR_UPDATE   
+            6,  # TASK_CREATE_OR_UPDATE
             None,
             None,
             3   # TASK_LOGON_INTERACTIVE_TOKEN
         )
         print(f" -> Successfully configured Task Scheduler entry: '{TASK_NAME}'")
-        
+
     except Exception as e:
         print(f"Failed to create Task Scheduler entry: {e}")
         print("\nPress Enter to exit...")
@@ -135,7 +135,7 @@ def create_startup_task():
 def initial_hardware_flash():
     """Executes the newly deployed EXE once to apply and flash the standalone configuration."""
     print("Step 4: Executing one-time hardware initialization (Standalone Profile)...")
-    
+
     try:
         # Run the deployed EXE directly with the 'standalone' parameter
         subprocess.check_call([EXE_PATH, "standalone"])
@@ -148,13 +148,13 @@ if __name__ == "__main__":
     print("====================================================")
     print("      FOCUSRITE AUTOMATION INSTALLER                ")
     print("====================================================\n")
-    
+
     check_requirements()
     compile_exe()
     deploy_exe()
     create_startup_task()
     initial_hardware_flash()
-    
+
     print("\n====================================================")
     print("      INSTALLATION SUMMARY                          ")
     print("====================================================")
@@ -162,7 +162,7 @@ if __name__ == "__main__":
     print(f" Target Path:               {EXE_PATH}")
     print(f" Task Name:                 {TASK_NAME} (Replaced/Updated)")
     print(f" Active Hardware State:     Flashed to Standalone Profile")
-    print(f" Profile:                   routing_playback_only (Triggered 5s after logon)")
+    print(f" Profile:                   computer (Triggered 5s after logon)")
     print("====================================================")
     print("\nSetup complete! You can safely close this window.")
     print("Press RETURN / ENTER to exit...")
