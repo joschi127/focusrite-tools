@@ -67,7 +67,7 @@ def load_config():
              pass
     
     # Ensure mandatory sections exist in config to avoid KeyError during initialization
-    for section in ["network", "routing"]:
+    for section in ["network", "profiles"]:
         if section not in config:
             config[section] = default_config.get(section, {})
     
@@ -80,9 +80,6 @@ CONFIG, LOADED_CONFIG = load_config()
 HOST = CONFIG["network"]["host"]
 PORT_START, PORT_END = CONFIG["network"]["port_range"]
 TIMEOUT = CONFIG["network"]["timeout"]
-
-PLAYBACK_ONLY_COMMANDS = CONFIG["routing"]["playback_only"]
-STANDALONE_COMMANDS = CONFIG["routing"]["standalone"]
 
 def show_warning(message):
     """Logs a warning to the console and shows a message box if on Windows."""
@@ -182,7 +179,7 @@ def execute_tcp_stream(port, command_list):
         log_error_and_exit(f"Failed to transmit data to server on port {port}. Error: {str(e)}")
 
 
-def execute_routing(mode):
+def execute_profile(profile_name):
     port = find_active_server_port()
     if not port:
         log_error_and_exit("Could not detect an active Focusrite Control Server instance.")
@@ -197,24 +194,20 @@ def execute_routing(mode):
         LOADED_CONFIG["network"]["last_successful_port"] = port
         save_config(LOADED_CONFIG)
 
-    if mode == "playback_only":
-        print("Switching matrix to Playback Only configuration...")
-        execute_tcp_stream(port, PLAYBACK_ONLY_COMMANDS)
-        
-    elif mode == "standalone":
-        print("Switching matrix to Standalone Hardware routing...")
-        execute_tcp_stream(port, STANDALONE_COMMANDS)
+    commands = CONFIG["profiles"].get(profile_name)
+    if not commands:
+        log_error_and_exit(f"Profile '{profile_name}' not found in configuration.")
+
+    print(f"Executing profile: {profile_name}...")
+    execute_tcp_stream(port, commands)
 
 
 if __name__ == "__main__":
-    mode = "playback_only"
+    mode = "routing_playback_only"
     if len(sys.argv) >= 2:
-        if sys.argv[1] in ["playback_only", "standalone"]:
-            mode = sys.argv[1]
-        else:
-            log_error_and_exit(f"Invalid execution argument: {sys.argv[1]}")
-        
+        mode = sys.argv[1]
+
     try:
-        execute_routing(mode)
+        execute_profile(mode)
     except Exception as e:
         log_error_and_exit(f"An unexpected runtime exception occurred:\n{str(e)}")

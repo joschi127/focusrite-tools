@@ -120,7 +120,7 @@ def create_startup_task():
 
         action = task_def.Actions.Create(0) # TASK_ACTION_EXEC
         action.Path = EXE_PATH
-        action.Arguments = "playback_only"
+        action.Arguments = "routing_playback_only"
 
         principal = task_def.Principal
         principal.LogonType = 3  # TASK_LOGON_INTERACTIVE_TOKEN
@@ -172,7 +172,7 @@ if __name__ == "__main__":
     print(f" Target Path:               {EXE_PATH}")
     print(f" Task Name:                 {TASK_NAME} (Replaced/Updated)")
     print(f" Active Hardware State:     Flashed to Standalone Profile")
-    print(f" Profile:                   playback_only (Triggered 5s after logon)")
+    print(f" Profile:                   routing_playback_only (Triggered 5s after logon)")
     print("====================================================")
     print("\nSetup complete! You can safely close this window.")
     print("Press RETURN / ENTER to exit...")

@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added technical references for Focusrite protocol implementation in `README.md` and `.junie/AGENTS.md`.
+
+### Changed
+- Renamed configuration key `routing` to `profiles`
+- Renamed `playback_only` to `routing_playback_only` and `standalone` to `routing_standalone` in configuration.
+- Updated `focusrite_switcher.py` to match the new configuration format using `profiles` and handle any profile name from CLI.
+
+### Added
 - Project restructuring into `focusrite-tools`, making `focusrite-switcher` one of multiple potential tools.
 - New directory structure: `tools/switcher/` contains the switcher logic and snapshot files.
 - Markdown formatting rule: All `.md` files now maintain a maximum line length of 120 characters.

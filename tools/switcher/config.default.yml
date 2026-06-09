@@ -5,11 +5,23 @@ network:
     - 50000
   timeout: 0.02
   last_successful_port: null
-routing:
-  playback_only:
-    - <client_command type="assign_source" output="line_output_1" source="daw_output_1"/>
-    - <client_command type="assign_source" output="line_output_2" source="daw_output_2"/>
-  standalone:
-    - <client_command type="assign_source" output="line_output_1" source="analogue_input_1"/>
-    - <client_command type="assign_source" output="line_output_2" source="analogue_input_2"/>
-    - <client_command type="flash_hardware"/>
+profiles:
+  routing_playback_only:
+    - '<client_command type="assign_source" output="line_output_1" source="daw_output_1"/>'
+    - '<client_command type="assign_source" output="line_output_2" source="daw_output_2"/>'
+  routing_standalone:
+    - '<client_command type="assign_source" output="line_output_1" source="analogue_input_1"/>'
+    - '<client_command type="assign_source" output="line_output_2" source="analogue_input_2"/>'
+    - '<client_command type="flash_hardware"/>'
+  a1_preamp_true:
+    - '<set devid="1"><item id="23" value="true"/></set>'
+  a1_preamp_false:
+    - '<set devid="1"><item id="23" value="false"/></set>'
+  a2_inst_true:
+    - '<set devid="1"><item id="28" value="Inst"/></set>'
+  a2_inst_false:
+    - '<set devid="1"><item id="28" value="Line"/></set>'
+  mode_color:
+    - '<set devid="1"><item id="43" value="true"/></set>'
+  mode_normal:
+    - '<set devid="1"><item id="43" value="false"/></set>'

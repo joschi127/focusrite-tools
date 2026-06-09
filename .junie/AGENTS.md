@@ -25,5 +25,10 @@
     - Host: `127.0.0.1` (local Focusrite Control Server).
     - Port Range: `49152` to `50000` (dynamic port detection).
     - Protocol: TCP with custom length-prefixed XML framing (`Length=XXXXXX <xml_command/>\n`).
+- **References:**
+    - [Focusrite-Midi-Control](https://github.com/raduvarga/Focusrite-Midi-Control)
+    - [Focusrite-Midi-Control - device-arrival.xml](https://github.com/raduvarga/Focusrite-Midi-Control/blob/master/example%20xml/device-arrival.xml)
+    - [Focusrite-Midi-Control - device-set.xml](https://github.com/raduvarga/Focusrite-Midi-Control/blob/master/example%20xml/device-set.xml)
+    - [companion-module-focusrite-clarett - focusrite-client.js](https://github.com/bitfocus/companion-module-focusrite-clarett/blob/main/focusrite-client.js)
 - **Dependencies:** `pywin32`, `PyInstaller` (for build), and standard library modules (`socket`, `sys`, `os`, `time`).
 - **Deployment Path:** Default installation to `%ProgramFiles%\Focusrite Switcher`.

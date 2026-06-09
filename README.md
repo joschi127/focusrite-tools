@@ -82,6 +82,17 @@ schtasks /run /tn "Focusrite_Playback_Startup"
 
 ---
 
+## References
+
+For further details on the Focusrite Control protocol and XML structure, the following resources are used as reference:
+
+- [Focusrite-Midi-Control](https://github.com/raduvarga/Focusrite-Midi-Control)
+- [Focusrite-Midi-Control - device-arrival.xml](https://github.com/raduvarga/Focusrite-Midi-Control/blob/master/example%20xml/device-arrival.xml)
+- [Focusrite-Midi-Control - device-set.xml](https://github.com/raduvarga/Focusrite-Midi-Control/blob/master/example%20xml/device-set.xml)
+- [companion-module-focusrite-clarett - focusrite-client.js](https://github.com/bitfocus/companion-module-focusrite-clarett/blob/main/focusrite-client.js)
+
+---
+
 ## ?? Development and Testing
 
 ### Debian/Ubuntu (Development/Testing)
