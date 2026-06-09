@@ -54,9 +54,6 @@ def send_test(host="192.168.5.27", port=49673):
     # Example: SET Mix A Input 1 Gain to -10.0 dB
     xml_command2 = '<set devid="1"><item id="55" value="-10.0"/></set>'
 
-    # Example: SET Mix A Input 1 Muted to true
-    #xml_command = '<set devid="1"><item id="57" value="true"/></set>'
-
     payload_handshake = frame(xml_handshake)
     payload_subscribe = frame(xml_subscribe)
     payload_keepalive = frame(xml_keepalive)
@@ -132,7 +129,7 @@ def send_test(host="192.168.5.27", port=49673):
 
                 # Extract values for IDs 55, 57, 798 and 799
                 print("\n[EXTRACTED VALUES]:")
-                for target_id in ["55", "57", "798", "799"]:
+                for target_id in ["55", "798", "799"]:
                     # Find all occurrences and take the last one (most recent state)
                     matches = re.findall(f'(<item id="{target_id}" value="([^"]*)"/>)', decoded_response)
                     if matches:
