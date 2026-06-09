@@ -20,7 +20,9 @@
 - **Indentation:** Use 4 spaces for indentation in **all** file types (`.md`, `.yml`/`.yaml`, `.xml`, `.py`). Do not
   use tabs or 3-space (or 2-space) indentation. This is enforced via the root `.editorconfig`, so make sure your
   editor has EditorConfig support enabled.
-- **Markdown Formatting:** All `.md` files must maintain a maximum line length of 120 characters.
+- **Markdown Formatting:** All `.md` files must maintain a maximum line length of 120 characters. Indents for bullet
+  points should be only 2 for compatibility with GitHub rendering. (even though for other content we use 4)
+
 
 ## Technical Specifications
 - **Language & Runtime:** Python 3.x, recommended to run within a virtual environment (`venv`). 
