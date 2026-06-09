@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Identified the true reason `<set>` commands had no effect: a live test against a real Scarlett 18i8 server showed
+  the server replies with `<approval ... authorised="false"/>`. While the client is not approved/trusted in the
+  Focusrite Control desktop application, the server silently ignores every `<set>` (framing, `subscribe="true"`
+  subscription and the `<set>`/`<item>` syntax were all already correct). Approval is bound to the `client-key`, so
+  it only needs to be granted once. Updated `focusrite_send_test.py` to detect and warn on the approval status and
+  documented the requirement in `docs/focusrite_control_api/focusrite_control_api.md`.
+- Fixed `<set>` commands still being silently ignored by the Focusrite Control Server: the `<device-subscribe>`
+  element requires the `subscribe="true"` attribute (`<device-subscribe devid="N" subscribe="true"/>`); a bare
+  `<device-subscribe devid="N"/>` does not establish a real subscription, so all `<set>` commands were ignored.
+  Confirmed against the authentic reverse-engineered client `raduvarga/Focusrite-Midi-Control` (`TCPListener.swift`).
+  Also clarified that the `<set devid="N"><item id="X" value="V"/></set>` syntax is correct (no `<setvalue>` command
+  exists). Updated `focusrite_send_test.py` and `docs/focusrite_control_api/focusrite_control_api.md` accordingly.
+- Fixed `<set>` commands being silently ignored by the Focusrite Control Server. A client must now send
+  `<device-subscribe>` after the handshake before any `<set>` command is accepted, and the `Length=XXXXXX `
+  prefix must use 6-digit uppercase hexadecimal (no trailing newline). Updated `focusrite_send_test.py` and the
+  "How to Control Input Volume (Gain)" section in `docs/focusrite_control_api/focusrite_control_api.md` accordingly.
+
 ### Added
 - Added response parsing to `focusrite_send_test.py` to extract and print specific item values (IDs 55, 798, 799) for
   easier verification of changes.

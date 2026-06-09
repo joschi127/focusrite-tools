@@ -3,51 +3,95 @@ import time
 import re
 
 #
-# Minimalistic script to send handshake and keepalive commands to a Focusrite Control Server and receive the
-# client-details, device-arrival and set response XML data.
+# Minimalistic script to send handshake, device-subscribe, keepalive and set commands to a Focusrite Control Server
+# and receive the client-details, device-arrival and set response XML data.
 #
 # Also see `docs/focusrite_control_api/focusrite_control_api.md` for more information.
 #
+# IMPORTANT protocol details (confirmed against the reference implementation
+# https://github.com/bitfocus/companion-module-focusrite-clarett/blob/main/focusrite-client.js):
+#
+# 1. Framing is a PREFIX, not a suffix: `Length=XXXXXX <xml>` where XXXXXX is the byte length of the XML
+#    payload encoded as a 6-digit, zero-padded, UPPERCASE HEXADECIMAL number. There is NO trailing '\n'.
+# 2. The keep-alive payload is a bare `<keep-alive/>` element (it does not need to be wrapped in `<set>`).
+# 3. A client MUST subscribe to a device before the server will accept and apply any `<set>` command for that
+#    device. The subscribe element REQUIRES the `subscribe="true"` attribute:
+#    `<device-subscribe devid="N" subscribe="true"/>`. Sending a bare `<device-subscribe devid="N"/>` (without
+#    `subscribe="true"`) does NOT establish a real subscription, so the server silently ignores every `<set>`
+#    we send afterwards - which is exactly why our earlier attempts looked like they were "ignored".
+# 4. The `<set>` syntax itself is correct: `<set devid="N"><item id="X" value="V"/></set>`. There is no
+#    `<setvalue>` or similar command - the server's own state dump uses the very same `<item id=.. value=.."/>`
+#    elements, confirmed against the authentic reverse-engineered client (raduvarga/Focusrite-Midi-Control).
+# 5. *** THE ACTUAL REASON OUR <set> COMMANDS WERE IGNORED ***: the client must be APPROVED (trusted) inside the
+#    Focusrite Control desktop application before the server will apply ANY <set>. After the handshake the server
+#    replies with <approval ... authorised="false"/> until the user approves this client in Focusrite Control.
+#    While authorised="false", reads/handshake/subscribe all still work, but every <set> is silently ignored.
+#    The approval is bound to the client-key (here "123456"); keep it stable so you only have to approve once.
+#    Open Focusrite Control -> the new remote client appears and must be allowed/trusted; then re-run this script
+#    and authorised will become "true" and the value changes will take effect.
+#
+
+
+def frame(xml: str) -> str:
+    """Wrap an XML payload with the mandatory length PREFIX used by the Focusrite Control Server.
+
+    Format: `Length=XXXXXX <xml>` where XXXXXX is the payload byte length as a 6-digit uppercase hex number.
+    Note: there is intentionally NO trailing newline character.
+    """
+    length = len(xml.encode("utf-8"))
+    return f"Length={length:06X} {xml}"
+
 
 def send_test(host="192.168.5.27", port=49673):
-    # 2. Build the core XML command string
-    xml_handshake = '<client-details hostname="Junie" client-name="FocusriteSwitcher" client-id="123456"/>'
-    xml_keepalive = '<set devid="1"><keep-alive/></set>'
-    
-    # Example: SET Analogue 1 Mode to 'Inst'
-    #xml_command = '<set devid="1"><item id="799" value="Inst"/></set>'
-    
-    # Example: SET Mix A Input 1 Gain to -10.0 dB
-    xml_command = '<set devid="1"><item id="55" value="-10.0"/></set>'
+    # 1. Build the core XML command strings
+    xml_handshake = '<client-details hostname="Junie" client-key="123456"/>'
+    xml_subscribe = '<device-subscribe devid="1" subscribe="true"/>'
+    xml_keepalive = '<keep-alive/>'
 
-    # Example: SET Analogue 1 Muted to true
+    # Example: SET Analogue 1 Mode to 'Inst'
+    xml_command = '<set devid="1"><item id="799" value="Inst"/></set>'
+
+    # Example: SET Mix A Input 1 Gain to -10.0 dB
+    xml_command2 = '<set devid="1"><item id="55" value="-10.0"/></set>'
+
+    # Example: SET Mix A Input 1 Muted to true
     #xml_command = '<set devid="1"><item id="57" value="true"/></set>'
 
-    # FIX: Append the mandatory '\n' token to the end of the payload string
-    # This signals the Focusrite Server to instantly process the buffer.
-    payload_handshake = f"Length={len(xml_handshake):06d} {xml_handshake}\n"
-    payload_keepalive = f"Length={len(xml_keepalive):06d} {xml_keepalive}\n"
-    payload_command = f"Length={len(xml_command):06d} {xml_command}\n"
-    
+    payload_handshake = frame(xml_handshake)
+    payload_subscribe = frame(xml_subscribe)
+    payload_keepalive = frame(xml_keepalive)
+    payload_command = frame(xml_command)
+    payload_command2 = frame(xml_command2)
+
     print(f"Connecting to Focusrite Control Server on {host}:{port}...")
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.settimeout(10.0)
             s.connect((host, port))
-            
-            # Sending handshake
+
+            # Sending handshake (gives us the client-details / approval and device-arrival response)
             print("Sending handshake...")
             s.sendall(payload_handshake.encode('utf-8'))
             time.sleep(0.5)
 
-            # Sending keep-alive (which will give us the current state of the device)
-            print("Sending keep-alive...")
-            s.sendall(payload_keepalive.encode('utf-8'))
+            # Subscribing to the device. This is REQUIRED before the server will accept any `<set>` command.
+            print("Sending device-subscribe...")
+            s.sendall(payload_subscribe.encode('utf-8'))
             time.sleep(0.5)
 
             # Sending command
             print(f"Sending command: {xml_command}")
             s.sendall(payload_command.encode('utf-8'))
+            time.sleep(0.5)
+
+            # Sending command2
+            print(f"Sending command2: {xml_command2}")
+            s.sendall(payload_command2.encode('utf-8'))
+            time.sleep(0.5)
+
+            # Sending keep-alive (which will give us the current state of the device)
+            print("Sending keep-alive...")
+            s.sendall(payload_keepalive.encode('utf-8'))
             time.sleep(0.5)
 
             # Receive responses
@@ -71,7 +115,22 @@ def send_test(host="192.168.5.27", port=49673):
                 decoded_response = response.decode('utf-8', errors='ignore')
                 print(f"\n[SERVER RESPONSE]:\n{decoded_response}")
 
-                # Extract values for IDs 55, 798 and 799
+                # Check the approval / authorisation state. This is the gate that decides whether the server
+                # actually APPLIES our <set> commands. While authorised="false" every <set> is silently ignored.
+                print("\n[APPROVAL STATUS]:")
+                auth_matches = re.findall(r'authorised="([^"]*)"', decoded_response)
+                if auth_matches:
+                    authorised = auth_matches[-1]
+                    print(f"authorised = {authorised}")
+                    if authorised != "true":
+                        print("  -> This client is NOT approved yet, so the server will IGNORE every <set> command.")
+                        print("  -> Approve/trust this client (client-key) inside the Focusrite Control desktop")
+                        print("     application, then re-run this script. Value changes only take effect once")
+                        print("     authorised becomes \"true\".")
+                else:
+                    print("No <approval> element found in the response.")
+
+                # Extract values for IDs 55, 57, 798 and 799
                 print("\n[EXTRACTED VALUES]:")
                 for target_id in ["55", "57", "798", "799"]:
                     # Find all occurrences and take the last one (most recent state)
@@ -82,7 +141,7 @@ def send_test(host="192.168.5.27", port=49673):
                         print(f"ID {target_id}: Not found")
             else:
                 print("\n[SERVER RESPONSE]: No data received.")
-                
+
     except Exception as e:
         print(f"Socket Communication Error: {e}")
 
