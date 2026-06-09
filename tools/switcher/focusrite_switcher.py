@@ -90,6 +90,13 @@ STANDALONE_COMMANDS = CONFIG["routing"]["standalone"]
 FLASH_HARDWARE_COMMAND = CONFIG["routing"]["flash_command"]
 # ==============================================================================
 
+def show_warning(message):
+    """Logs a warning to the console and shows a message box if on Windows."""
+    print(f"WARNING: {message}")
+    if HAS_WIN32:
+        win32gui.MessageBox(0, message, "Focusrite Switcher Warning", win32con.MB_ICONWARNING | win32con.MB_OK)
+
+
 def log_error_and_exit(message):
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
     formatted_msg = f"[{timestamp}] ERROR: {message}\n"
@@ -162,8 +169,10 @@ def execute_tcp_stream(port, command_list, should_flash=False):
                     response = s.recv(4096).decode('utf-8', errors='ignore')
                     if response:
                         print(f" -> Server Response: {response.strip()}")
+                    else:
+                        show_warning(f"No response received for command: {cmd}")
                 except socket.timeout:
-                    pass
+                    show_warning(f"Timeout reached while waiting for response to command: {cmd}")
                 
             if should_flash:
                 flash_payload = f"Length={len(FLASH_HARDWARE_COMMAND):06d} {FLASH_HARDWARE_COMMAND}\n"
@@ -175,8 +184,10 @@ def execute_tcp_stream(port, command_list, should_flash=False):
                     response = s.recv(4096).decode('utf-8', errors='ignore')
                     if response:
                         print(f" -> Server Response: {response.strip()}")
+                    else:
+                        show_warning("No response received for hardware flash command.")
                 except socket.timeout:
-                    pass
+                    show_warning("Timeout reached while waiting for response to hardware flash command.")
                 
     except Exception as e:
         log_error_and_exit(f"Failed to transmit data to server on port {port}. Error: {str(e)}")

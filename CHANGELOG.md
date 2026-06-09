@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Project restructuring into `focusrite-tools`, making `focusrite-switcher` one of multiple potential tools.
 - New directory structure: `tools/switcher/` contains the switcher logic and snapshot files.
 - Markdown formatting rule: All `.md` files now maintain a maximum line length of 120 characters.
+- Warning mechanism in `focusrite_switcher.py` to notify the user (via MessageBox on Windows or console otherwise) when
+  no response or a timeout occurs during server communication.
 
 ### Changed
 - Updated `install.py` to support the new project structure and correctly locate `focusrite_switcher.py` and snapshot
