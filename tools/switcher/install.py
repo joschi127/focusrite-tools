@@ -12,6 +12,7 @@ except ImportError:
 # CONFIGURATION
 # ==============================================================================
 SCRIPT_NAME = "focusrite_switcher.py"
+SCRIPT_PATH = SCRIPT_NAME
 EXE_NAME = "focusrite_switcher.exe"
 # Target folder name featuring a space and custom spelling
 TARGET_DIR = os.path.join(os.environ.get("ProgramFiles", r"C:\Program Files"), "Focusrite Switcher")
@@ -21,8 +22,8 @@ TASK_NAME = "Focusrite_Switcher_Startup"
 
 def check_requirements():
     """Ensure focusrite_switcher.py exists in the current folder."""
-    if not os.path.exists(SCRIPT_NAME):
-        print(f"Error: Could not find '{SCRIPT_NAME}' in the current directory.")
+    if not os.path.exists(SCRIPT_PATH):
+        print(f"Error: Could not find '{SCRIPT_NAME}' at '{SCRIPT_PATH}'.")
         print("Please ensure both 'install.py' and 'focusrite_switcher.py' are in the same folder.")
         print("\nPress Enter to exit...")
         input()
@@ -30,7 +31,7 @@ def check_requirements():
 
 def compile_exe():
     """Compiles the python script into a single windowless executable using PyInstaller."""
-    print("Step 1: Compiling focusrite_switcher.py using PyInstaller...")
+    print(f"Step 1: Compiling {SCRIPT_NAME} using PyInstaller...")
     
     try:
         import PyInstaller
@@ -42,7 +43,10 @@ def compile_exe():
         sys.executable, "-m", "PyInstaller",
         "--onefile",
         "--noconsole",
-        SCRIPT_NAME
+        "--distpath", "dist",
+        "--workpath", "build",
+        "--specpath", ".",
+        SCRIPT_PATH
     ]
     
     try:

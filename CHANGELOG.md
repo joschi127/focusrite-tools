@@ -6,29 +6,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Added
+- Project restructuring into `focusrite-tools`, making `focusrite-switcher` one of multiple potential tools.
+- New directory structure: `tools/switcher/` contains the switcher logic and snapshot files.
+- Markdown formatting rule: All `.md` files now maintain a maximum line length of 120 characters.
+
+### Changed
+- Updated `install.py` to support the new project structure and correctly locate `focusrite_switcher.py` and snapshot
+  files.
+- Renamed the project focus from a single tool to a suite of Focusrite-related utilities.
+- Moved `install.py` to `tools/switcher/` directory as it is specific to the switcher tool.
+
 ### Fixed
 - Reinstalled dependencies in `.venv` to ensure clean environment state.
 
 ### Added
-- Successfully initialized `.venv` using `virtualenv` and installed Linux-compatible dependencies (`PyYAML`, `PyInstaller`).
+- Successfully initialized `.venv` using `virtualenv` and installed Linux-compatible dependencies (`PyYAML`,
+  `PyInstaller`).
 
 ### Changed
 - Made `pywin32` and `pyinstaller` optional dependencies in `requirements.txt`, only installing them on Windows.
-- Updated `install.py` to gracefully skip Windows-specific steps (Task Scheduler registration) when `pywin32` is not installed.
+- Updated `install.py` to gracefully skip Windows-specific steps (Task Scheduler registration) when `pywin32` is not
+  installed.
 
 ### Changed
-- Switched recommendation for Debian-based systems from `python3-virtualenv` to `python3-venv` for better standard library alignment.
+- Switched recommendation for Debian-based systems from `python3-virtualenv` to `python3-venv` for better standard
+  library alignment.
 - Recommendation to install `python3-venv` globally on Debian-based systems to simplify virtual environment setup.
 - Debian/Ubuntu specific setup instructions in `README.md`.
 
 ### Changed
 - Renamed virtual environment directory from `venv` to `.venv` for better standard compliance.
 - Updated `README.md` and `.gitignore` to reflect the new `.venv` directory name.
+
 ### Added
 - Python virtual environment (`venv`) support for isolated dependency management.
 - Detailed venv setup instructions in `README.md`.
 - Updated technical specifications in project guidelines to recommend `venv`.
-- Robust TCP communication: implemented clearing of the initial greeting buffer and waiting for server responses for each command, porting logic from `test_send_snapshot.py`.
+- Robust TCP communication: implemented clearing of the initial greeting buffer and waiting for server responses for
+  each command, porting logic from `test_send_snapshot.py`.
 - Caching of the last successful TCP port to `config.yml` to speed up future server discovery.
 - `last_successful_port` configuration key under the `network` section.
 - config.example.yml with default values.
@@ -39,7 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `PyYAML` dependency to `requirements.txt`.
 - Added platform-agnostic fallback for `win32gui` during testing and non-Windows environments.
 - Created `CHANGELOG.md` to track project changes.
-- Updated `.junie/guidelines.md` (now `AGENTS.md`): translated to English and added detailed "Development Principles" and "Technical Specifications" based on the existing codebase and README.
+- Updated `.junie/guidelines.md` (now `AGENTS.md`): translated to English and added detailed "Development
+  Principles" and "Technical Specifications" based on the existing codebase and README.
 
 ### Removed
 - Removed temporary `get-pip.py` bootstrap script and accidentally created files.
@@ -47,7 +65,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Moved `config.yml` to `.gitignore` and added `config.example.yml` as a template.
 - Renamed `.junie/guidelines.md` to `.junie/AGENTS.md`.
-- Updated root `.gitignore` to use `/venv/` instead of `/.venv/` to match the project's virtual environment directory name.
+- Updated root `.gitignore` to use `/venv/` instead of `/.venv/` to match the project's virtual environment
+  directory name.
 
 ### Fixed
 - Resolved `ModuleNotFoundError: No module named 'yaml'` by ensuring `PyYAML` is installed in the environment.

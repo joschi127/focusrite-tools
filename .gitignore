@@ -1,5 +1,5 @@
 /.idea/
 /.venv/
 /build/
-/config.yml
-/error.log
+/tools/*/config.yml
+*.log
