@@ -10,31 +10,9 @@ try:
 except ImportError:
     HAS_WIN32 = False
 
-# ==============================================================================
-# CONFIGURATION DEFAULTS
-# ==============================================================================
-DEFAULT_CONFIG = {
-    "network": {
-        "host": "127.0.0.1",
-        "port_range": [49152, 50000],
-        "timeout": 0.02,
-        "last_successful_port": None
-    },
-    "routing": {
-        "playback_only": [
-            '<client_command type="assign_source" output="line_output_1" source="daw_output_1"/>',
-            '<client_command type="assign_source" output="line_output_2" source="daw_output_2"/>'
-        ],
-        "standalone": [
-            '<client_command type="assign_source" output="line_output_1" source="analogue_input_1"/>',
-            '<client_command type="assign_source" output="line_output_2" source="analogue_input_2"/>'
-        ],
-        "flash_command": '<client_command type="flash_hardware"/>'
-    }
-}
-
-APP_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_FILE_PATH = os.path.join(APP_DIR, "config.yml")
+DEFAULT_CONFIG_FILE_PATH = os.path.join(APP_DIR, "config.default.yml")
 LOG_FILE_PATH = os.path.join(APP_DIR, "error.log")
 
 def save_config(config):
@@ -45,40 +23,58 @@ def save_config(config):
     except Exception:
         pass
 
-def load_config():
-    """Loads config from YAML, merges with defaults, and saves if changes were made."""
-    config = DEFAULT_CONFIG.copy()
-    updated = False
-
-    if os.path.exists(CONFIG_FILE_PATH):
+def load_yaml(file_path):
+    """Loads a YAML file and returns its content as a dictionary."""
+    if os.path.exists(file_path):
         try:
-            with open(CONFIG_FILE_PATH, "r", encoding="utf-8") as f:
-                loaded_config = yaml.safe_load(f) or {}
-            
-            # Deep merge logic for the two-level dictionary
-            for section, values in DEFAULT_CONFIG.items():
-                if section not in loaded_config:
-                    loaded_config[section] = values.copy()
-                    updated = True
-                else:
-                    for key, val in values.items():
-                        if key not in loaded_config[section]:
-                            loaded_config[section][key] = val
-                            updated = True
-            config = loaded_config
+            with open(file_path, "r", encoding="utf-8") as f:
+                return yaml.safe_load(f) or {}
         except Exception:
-            # If config is corrupted, we'll proceed with defaults
             pass
-    else:
-        updated = True
+    return {}
 
-    if updated:
-        save_config(config)
+def load_config():
+    """Loads config from YAML and merges with defaults from config.default.yml."""
+    default_config = load_yaml(DEFAULT_CONFIG_FILE_PATH)
+    loaded_config = load_yaml(CONFIG_FILE_PATH)
     
-    return config
+    config = {}
+
+    # Deep merge and handle '~' (None)
+    for section, values in default_config.items():
+        if section not in config:
+            config[section] = {}
+        loaded_section = loaded_config.get(section, {})
+        
+        for key, default_val in values.items():
+            loaded_val = loaded_section.get(key)
+            # If key is missing or explicitly set to None (~)
+            if key not in loaded_section or loaded_val is None:
+                config[section][key] = default_val
+            else:
+                config[section][key] = loaded_val
+
+    # Ensure any extra top-level sections or keys in config.yml are preserved
+    for section, values in loaded_config.items():
+        if section not in config:
+            config[section] = values
+        elif isinstance(values, dict):
+            for key, val in values.items():
+                if key not in config[section]:
+                    config[section][key] = val
+        elif section in config and not isinstance(config[section], dict):
+             # If it's a top level key that's not a dict, it's already handled or should be preserved
+             pass
+    
+    # Ensure mandatory sections exist in config to avoid KeyError during initialization
+    for section in ["network", "routing"]:
+        if section not in config:
+            config[section] = default_config.get(section, {})
+    
+    return config, loaded_config
 
 # Load active configuration
-CONFIG = load_config()
+CONFIG, LOADED_CONFIG = load_config()
 
 # Helper accessors for clarity
 HOST = CONFIG["network"]["host"]
@@ -201,7 +197,12 @@ def execute_routing(mode):
     # Save port to config if it's new
     if port != CONFIG["network"].get("last_successful_port"):
         CONFIG["network"]["last_successful_port"] = port
-        save_config(CONFIG)
+        
+        # Also update LOADED_CONFIG to persist it without filling in defaults
+        if "network" not in LOADED_CONFIG:
+            LOADED_CONFIG["network"] = {}
+        LOADED_CONFIG["network"]["last_successful_port"] = port
+        save_config(LOADED_CONFIG)
 
     if mode == "playback_only":
         print("Switching matrix to Playback Only configuration...")

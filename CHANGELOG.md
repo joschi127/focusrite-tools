@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   no response or a timeout occurs during server communication.
 
 ### Changed
+- Removed hardcoded configuration defaults from `focusrite_switcher.py`.
+- Switched to reading default configuration from `tools/switcher/config.default.yml`.
+- Added support for `~` (null) in `config.yml` to fall back to `config.default.yml` values.
 - Updated `install.py` to support the new project structure and correctly locate `focusrite_switcher.py` and snapshot
   files.
 - Renamed the project focus from a single tool to a suite of Focusrite-related utilities.
@@ -22,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Reinstalled dependencies in `.venv` to ensure clean environment state.
+- Prevented `focusrite_switcher.py` from overwriting `~` (null) values and missing keys in `config.yml` with defaults.
+- Fixed configuration path resolution in `focusrite_switcher.py` to correctly locate files when imported or launched
+  from different directories.
 
 ### Added
 - Successfully initialized `.venv` using `virtualenv` and installed Linux-compatible dependencies (`PyYAML`,

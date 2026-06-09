@@ -2,7 +2,7 @@ import os
 import socket
 import time
 
-def send_focusrite_snapshot(snapshot_path, host="127.0.0.1", port=49673):
+def send_focusrite_snapshot(snapshot_path, host="192.168.5.27", port=49673):
     # 1. Ensure absolute native windows slashes
     clean_path = os.path.normpath(snapshot_path)
     
