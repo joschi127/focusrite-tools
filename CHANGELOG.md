@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- Reinstalled dependencies in `.venv` to ensure clean environment state.
+
+### Added
+- Successfully initialized `.venv` using `virtualenv` and installed Linux-compatible dependencies (`PyYAML`, `PyInstaller`).
+
+### Changed
+- Made `pywin32` and `pyinstaller` optional dependencies in `requirements.txt`, only installing them on Windows.
+- Updated `install.py` to gracefully skip Windows-specific steps (Task Scheduler registration) when `pywin32` is not installed.
+
+### Changed
+- Switched recommendation for Debian-based systems from `python3-virtualenv` to `python3-venv` for better standard library alignment.
+- Recommendation to install `python3-venv` globally on Debian-based systems to simplify virtual environment setup.
+- Debian/Ubuntu specific setup instructions in `README.md`.
+
+### Changed
+- Renamed virtual environment directory from `venv` to `.venv` for better standard compliance.
+- Updated `README.md` and `.gitignore` to reflect the new `.venv` directory name.
 ### Added
 - Python virtual environment (`venv`) support for isolated dependency management.
 - Detailed venv setup instructions in `README.md`.

@@ -1,6 +1,5 @@
 /.idea/
 /.venv/
-/venv/
 /build/
 /config.yml
 /error.log

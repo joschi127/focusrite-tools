@@ -42,6 +42,7 @@ If you downloaded or cloned this repository onto a network share or network driv
 3. Right-click on **Command Prompt** and select **"Run as Administrator"**.
 
 ### 3. Install Prerequisites & Run Installer
+#### Windows
 Navigate to your local folder inside the terminal window, set up a virtual environment, install the required packages, and execute the setup script (replace the path in the first command with your actual local directory path):
 
 ```cmd
@@ -51,10 +52,21 @@ AddFirewallException.cmd
 :: restart might be needed
 
 cd /d "C:\Users\username\Downloads\focusrite_switcher"
-python -m venv venv
-venv\Scripts\activate
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
 python install.py
+```
+
+#### Debian/Ubuntu (Development/Testing)
+On Debian-based systems, you can simplify the virtual environment setup by installing the `python3-venv` package globally:
+
+```bash
+sudo apt update
+sudo apt install python3-venv
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
 ### 4. Post-Installation Verification

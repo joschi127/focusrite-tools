@@ -2,7 +2,11 @@ import os
 import sys
 import shutil
 import subprocess
-import win32com.client
+try:
+    import win32com.client
+    HAS_WIN32COM = True
+except ImportError:
+    HAS_WIN32COM = False
 
 # ==============================================================================
 # CONFIGURATION
@@ -79,6 +83,10 @@ def deploy_exe():
 
 def create_startup_task():
     """Creates or replaces the Windows Task Scheduler entry targeting our newly deployed application."""
+    if not HAS_WIN32COM:
+        print("Step 3: Registering Task Scheduler entry... SKIPPED (win32com not available)")
+        return
+
     print("Step 3: Registering Task Scheduler entry...")
     
     try:
