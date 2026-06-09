@@ -44,7 +44,7 @@ def frame(xml: str) -> str:
 
 def send_test(host="192.168.5.27", port=49673):
     # 1. Build the core XML command strings
-    xml_handshake = '<client-details hostname="Junie" client-key="123456"/>'
+    xml_handshake = '<client-details hostname="focusrite-tools" client-key="123456"/>'
     xml_subscribe = '<device-subscribe devid="1" subscribe="true"/>'
     xml_keepalive = '<keep-alive/>'
 

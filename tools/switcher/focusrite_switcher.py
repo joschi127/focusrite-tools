@@ -133,7 +133,7 @@ def find_active_server_port():
 
 def execute_tcp_stream(port, command_list):
     """Establishes a single socket context and fires sequentially bounded string packages."""
-    handshake = '<client-details hostname="Junie" client-name="FocusriteSwitcher" client-id="12345"/>'
+    handshake = '<client-details hostname="focusrite-tools" client-name="FocusriteSwitcher" client-id="123456"/>'
     payload_handshake = f"Length={len(handshake):06d} {handshake}\n"
 
     try:

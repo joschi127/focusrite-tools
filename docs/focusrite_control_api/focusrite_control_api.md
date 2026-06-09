@@ -73,14 +73,14 @@ Common pitfalls and behaviors:
    `<item id="X" value="V"/>` elements, so writing a value simply mirrors how the server reports it back.
 4. **Client approval / authorisation (the real blocker):** This is what actually prevented our `<set>` commands
    from taking effect. After the handshake the server returns an `<approval>` element, e.g.
-   `<approval hostname="Junie" id="..." type="response" authorised="false"/>`. As long as `authorised="false"`,
-   the server happily accepts the connection, returns the full state dump and accepts the subscription, but it
-   **silently ignores every `<set>` command**. The client must first be **approved/trusted by the user inside the
-   Focusrite Control desktop application** (the new remote client shows up there and must be allowed). The approval
-   is bound to the `client-key` you send in `<client-details .. client-key="..."/>`, so keep that key stable -
-   you only need to approve once; changing the key forces a re-approval. Once `authorised="true"`, the very same
-   `<set>` commands take effect immediately. (Verified live against a real Scarlett 18i8 server: framing, the
-   `subscribe="true"` subscription and the `<set>`/`<item>` syntax were all already correct - the values only
+   `<approval hostname="focusrite-tools" id="..." type="response" authorised="false"/>`. As long as the handshake
+   returns `authorised="false"`,    the server happily accepts the connection, returns the full state dump and accepts
+   the subscription, but it **silently ignores every `<set>` command**. The client must first be **approved/trusted
+   by the user inside the Focusrite Control desktop application** (the new remote client shows up there and must be
+   allowed). The approval is bound to the `client-key` you send in `<client-details .. client-key="..."/>`, so keep
+   that key stable -  you only need to approve once; changing the key forces a re-approval. Once `authorised="true"`,
+   the very same `<set>` commands take effect immediately. (Verified live against a real Scarlett 18i8 server: framing,
+   the `subscribe="true"` subscription and the `<set>`/`<item>` syntax were all already correct - the values only
    stayed unchanged because the response reported `authorised="false"`.)
 
 
