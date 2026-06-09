@@ -77,7 +77,7 @@ and execute the setup script (replace the path in the first command with your ac
 ### 4. Post-Installation Verification
 Open a standard Command Prompt window and execute the following command to manually trigger your new startup task:
 
-        schtasks /run /tn "Focusrite_Playback_Startup"
+        schtasks /run /tn "Focusrite_Switcher_Startup"
 
 ---
 
