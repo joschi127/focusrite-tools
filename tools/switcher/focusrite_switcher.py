@@ -14,6 +14,8 @@ except ImportError:
     HAS_WIN32 = False
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
+if getattr(sys, 'frozen', False):
+    APP_DIR = os.path.dirname(os.path.abspath(sys.executable))
 CONFIG_FILE_PATH = os.path.join(APP_DIR, "config.yml")
 DEFAULT_CONFIG_FILE_PATH = os.path.join(APP_DIR, "config.default.yml")
 LOG_FILE_PATH = os.path.join(APP_DIR, "error.log")
