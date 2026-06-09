@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Fixed: In `load_config`, when `config.default.yml` could not be loaded, throw a fatal error including the path
+  of the file which could not be found or read.
 - Fixed `KeyError: 'host'` when running the compiled `focusrite_switcher.exe` on Windows. The application was
   incorrectly calculating its installation directory as the temporary folder used by PyInstaller during
   execution, causing it to miss the `config.yml` and `config.default.yml` files. It now correctly resolves the

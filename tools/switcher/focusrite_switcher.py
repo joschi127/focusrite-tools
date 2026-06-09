@@ -2,6 +2,8 @@ import sys
 import os
 import time
 import random
+from email import message
+
 import yaml
 
 from focusrite_client import FocusriteClient, FocusriteClientError, find_active_server_port
@@ -20,6 +22,29 @@ CONFIG_FILE_PATH = os.path.join(APP_DIR, "config.yml")
 DEFAULT_CONFIG_FILE_PATH = os.path.join(APP_DIR, "config.default.yml")
 LOG_FILE_PATH = os.path.join(APP_DIR, "error.log")
 
+
+def show_warning(message):
+    """Logs a warning to the console and shows a message box if on Windows."""
+    print(f" -> WARNING: {message}")
+    if HAS_WIN32:
+        win32gui.MessageBox(0, message, "Focusrite Switcher Warning", win32con.MB_ICONWARNING | win32con.MB_OK)
+
+
+def log_error_and_exit(message):
+    timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+    formatted_msg = f"[{timestamp}] ERROR: {message}\n"
+    try:
+        with open(LOG_FILE_PATH, "a", encoding="utf-8") as f:
+            f.write(formatted_msg)
+    except Exception:
+        pass
+    if HAS_WIN32:
+        win32gui.MessageBox(0, message, "Focusrite Switcher Error", win32con.MB_ICONERROR | win32con.MB_OK)
+    else:
+        print(f"UI NOTIFICATION (Simulated): {message}")
+    sys.exit(1)
+
+
 def save_config(config):
     """Saves the current configuration to the YAML file."""
     try:
@@ -28,19 +53,29 @@ def save_config(config):
     except Exception:
         pass
 
-def load_yaml(file_path):
+def load_yaml(file_path, required=False):
     """Loads a YAML file and returns its content as a dictionary."""
-    if os.path.exists(file_path):
-        try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                return yaml.safe_load(f) or {}
-        except Exception:
-            pass
+    if not os.path.exists(file_path):
+        message = f"Configuration file not found: {file_path}"
+        if required:
+            log_error_and_exit(message)
+        else:
+            print(f" -> WARNING: {message}")
+        return {}
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f) or {}
+    except Exception as e:
+        message = f"Reading configuration file failed: {file_path}. Error: {e}"
+        if required:
+            log_error_and_exit(message)
+        else:
+            print(f" -> WARNING: {message}")
     return {}
 
 def load_config():
     """Loads config from YAML and merges with defaults from config.default.yml."""
-    default_config = load_yaml(DEFAULT_CONFIG_FILE_PATH)
+    default_config = load_yaml(DEFAULT_CONFIG_FILE_PATH, required=True)
     loaded_config = load_yaml(CONFIG_FILE_PATH)
 
     config = {}
@@ -108,28 +143,6 @@ HOST = CONFIG["network"]["host"]
 PORT_START, PORT_END = CONFIG["network"]["port_range"]
 TIMEOUT = CONFIG["network"]["timeout"]
 CLIENT_KEY = ensure_client_key(CONFIG, LOADED_CONFIG)
-
-def show_warning(message):
-    """Logs a warning to the console and shows a message box if on Windows."""
-    print(f" -> WARNING: {message}")
-    if HAS_WIN32:
-        win32gui.MessageBox(0, message, "Focusrite Switcher Warning", win32con.MB_ICONWARNING | win32con.MB_OK)
-
-
-def log_error_and_exit(message):
-    timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-    formatted_msg = f"[{timestamp}] ERROR: {message}\n"
-    try:
-        with open(LOG_FILE_PATH, "a", encoding="utf-8") as f:
-            f.write(formatted_msg)
-    except Exception:
-        pass
-    if HAS_WIN32:
-        win32gui.MessageBox(0, message, "Focusrite Switcher Error", win32con.MB_ICONERROR | win32con.MB_OK)
-    else:
-        print(f"UI NOTIFICATION (Simulated): {message}")
-    sys.exit(1)
-
 
 def execute_commands(port, command_list):
     """Opens a single connection and runs the full protocol: handshake, device-subscribe, then the commands.
