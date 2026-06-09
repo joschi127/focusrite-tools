@@ -8,11 +8,14 @@ A collection of utilities for Focusrite Scarlett audio interfaces.
 This tool automates the routing profile switching on the Focusrite Scarlett 18i8 (2nd Gen) audio interface to
 seamlessly handle transitions between active PC usage and standalone operations.
 
-- **Windows Playback Mode:** Mutes all hardware inputs (`playback_only`) so that system audio and DAW playback operate
-  smoothly without any distracting direct hardware monitoring.
-- **Standalone Mode (Laptop Off/Disconnected):** The Scarlett automatically falls back to its internal non-volatile
-  memory (NVRAM) configuration (e.g., `8 Channel Analogue`), allowing instruments, synths, and microphones to be
-  monitored directly through your speakers or headphones without a computer.
+- **Computer Playback Mode: (`computer`)**  Switches the Scarlett to the "System Playback" preset. This will not
+  route any inputs to the monitor or headphone outputs and allows you to use your computer's audio software for
+  mixing and playback.
+- **Standalone Mode (Laptop Off/Disconnected) (`standalone`):** Switches the Scarlett to the "8 Channel Analogue"
+  preset. This will route all 8 analogue inputs to the monitor and headphone outputs.
+
+On only the `standalone` profile will be flased to non-volatile memory (NVRAM). So when powering on the Scarlett,
+it will automatically fall back to this configuration and is ready to be used without powering on your computer.
 
 ---
 
