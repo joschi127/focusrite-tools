@@ -69,17 +69,7 @@ def deploy_exe():
         
     try:
         os.makedirs(TARGET_DIR, exist_ok=True)
-        # Copy the executable
         shutil.copy2(src_path, EXE_PATH)
-        
-        # Copy snapshot files if they exist in the current directory
-        for ff_file in ["playback_only.ff", "standalone.ff"]:
-            if os.path.exists(ff_file):
-                shutil.copy2(ff_file, os.path.join(TARGET_DIR, ff_file))
-                print(f" -> Successfully copied '{ff_file}' to destination folder.")
-            else:
-                print(f" -> Warning: '{ff_file}' not found in current directory. Make sure to place it in Program Files later.")
-                
         print(" -> Successfully deployed all binary objects.")
     except Exception as e:
         print(f"Error deploying files: {e}")

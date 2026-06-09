@@ -23,8 +23,6 @@ seamlessly handle transitions between active PC usage and standalone operations.
 - `tools/` - Contains individual Focusrite utilities.
   - `switcher/` - The Focusrite Switcher tool.
     - `focusrite_switcher.py` - Core automation script.
-    - `playback_only.ff` - Snapshot for playback mode.
-    - `standalone.ff` - Snapshot for standalone mode.
     - `install.py` - Automated installer script for Windows deployment.
   - `send_test/` - Tool for testing communication with Focusrite Control Server.
     - `focusrite_send_test.py` - Script to send XML commands to the server.
