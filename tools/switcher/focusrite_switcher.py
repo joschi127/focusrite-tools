@@ -109,7 +109,7 @@ CLIENT_KEY = ensure_client_key(CONFIG, LOADED_CONFIG)
 
 def show_warning(message):
     """Logs a warning to the console and shows a message box if on Windows."""
-    print(f"WARNING: {message}")
+    print(f" -> WARNING: {message}")
     if HAS_WIN32:
         win32gui.MessageBox(0, message, "Focusrite Switcher Warning", win32con.MB_ICONWARNING | win32con.MB_OK)
 
@@ -135,14 +135,6 @@ def execute_commands(port, command_list):
     All low-level server communication (correct length-prefix framing, handshake with `client-key`, the
     mandatory `<device-subscribe .. subscribe="true"/>` step and the receive loop) is handled by
     `FocusriteClient` in `focusrite_client.py`.
-
-    IMPORTANT: a `<set>` command does NOT produce its own reply - the server applies the change silently and
-    only reflects the new value in its periodic state dump. Therefore an empty response to a `<set>` is the
-    normal, successful case and must NOT be treated as an error (this is why the old per-command "No response
-    received" warning made a working switch look broken). After sending all commands we issue a single
-    `<keep-alive/>` to pull the resulting device state as confirmation. Some commands (notably routing-profile
-    changes via `<item id="6">`) make the server briefly reset the connection while it reconfigures, so a
-    dropped connection during the final confirmation is expected and is NOT treated as a failure.
     """
     try:
         with FocusriteClient(HOST, port, timeout=5.0, client_key=CLIENT_KEY) as client:
@@ -154,6 +146,7 @@ def execute_commands(port, command_list):
                     "This client is not approved yet (authorised=\"false\"). The Focusrite Control Server "
                     "will ignore all commands until you approve this client in the Focusrite Control "
                     "desktop application.")
+                sys.exit(1)
 
             # 2. Subscribe to the device. REQUIRED before the server accepts any <set> command.
             client.subscribe(devid="1")
