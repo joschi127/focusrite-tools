@@ -9,10 +9,10 @@ This tool automates the routing profile switching on the Focusrite Scarlett 18i8
 seamlessly handle transitions between active PC usage and standalone operations.
 
 - **Computer Playback Mode: (`computer`)**  Switches the Scarlett to the "System Playback" preset. This will not
-  route any inputs to the monitor or headphone outputs and allows you to use your computer's audio software for
-  mixing and playback.
+    route any inputs to the monitor or headphone outputs and allows you to use your computer's audio software for
+    mixing and playback.
 - **Standalone Mode (Laptop Off/Disconnected) (`standalone`):** Switches the Scarlett to the "8 Channel Analogue"
-  preset. This will route all 8 analogue inputs to the monitor and headphone outputs.
+    preset. This will route all 8 analogue inputs to the monitor and headphone outputs.
 
 On only the `standalone` profile will be flased to non-volatile memory (NVRAM). So when powering on the Scarlett,
 it will automatically fall back to this configuration and is ready to be used without powering on your computer.
@@ -22,13 +22,14 @@ it will automatically fall back to this configuration and is ready to be used wi
 ## Project Structure
 
 - `docs/` - Project documentation.
-  - `focusrite_control_api/` - Documentation of the Focusrite Control Server XML API.
+    - `focusrite_control_api/` - Documentation of the Focusrite Control Server XML API.
 - `tools/` - Contains individual Focusrite utilities.
-  - `switcher/` - The Focusrite Switcher tool.
-    - `focusrite_switcher.py` - Core automation script.
-    - `install.py` - Automated installer script for Windows deployment.
     - `send_test/` - Tool for testing communication with Focusrite Control Server.
-    - `focusrite_send_test.py` - Script to send XML commands to the server.
+        - `focusrite_send_test.py` - Minimal script to send XML commands to the server.
+    - `switcher/` - The Focusrite Switcher tool.
+        - `focusrite_switcher.py` - Core automation script.
+        - `focusrite_client.py` - Focusrite Control Server API communication module.
+        - `install.py` - Automated installer script for Windows deployment.
 - `requirements.txt` - Project dependencies.
 - `README.md` - This instruction file.
 
