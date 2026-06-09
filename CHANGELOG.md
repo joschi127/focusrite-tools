@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   logged as a fatal error and exiting.
 
 ### Added
+- Added MIT LICENSE file to the project root.
 - Documented two additional Focusrite Control Server behaviors in
   `docs/focusrite_control_api/focusrite_control_api.md`: a `<set>` command produces no per-command reply (the
   server applies it silently and only reflects the value in its state dump), and a routing-profile change
