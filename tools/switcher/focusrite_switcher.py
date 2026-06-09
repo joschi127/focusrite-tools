@@ -111,7 +111,7 @@ def find_active_server_port():
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(TIMEOUT)
                 if s.connect_ex((HOST, last_port)) == 0:
-                    print(f" -> Found Focusrite Control Server on cached port {last_port}")
+                    print(f" -> Found Focusrite Control Server on last saved successful port {last_port}")
                     return last_port
         except Exception:
             pass
@@ -133,21 +133,22 @@ def find_active_server_port():
 
 def execute_tcp_stream(port, command_list):
     """Establishes a single socket context and fires sequentially bounded string packages."""
+    handshake = '<client-details hostname="Junie" client-name="FocusriteSwitcher" client-id="12345"/>'
+    payload_handshake = f"Length={len(handshake):06d} {handshake}\n"
+
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(3.0)
+            s.settimeout(5.0)
             s.connect((HOST, port))
             
-            # Focusrite servers often dump their current state immediately upon connection.
-            # We set a non-blocking temporary window to flush out any initial greeting data.
-            s.setblocking(False)
-            try:
-                time.sleep(0.1)
-                s.recv(8192)  # Clear the initial greeting buffer
-            except BlockingIOError:
-                pass
-            s.setblocking(True)
+            # 1. Send Handshake and Initial Command(s)
+            s.sendall(payload_handshake.encode('utf-8'))
             
+            # We don't wait for handshake response separately as some servers
+            # only send the full state dump after the first real command.
+            
+            # 2. Send actual commands
+            s.setblocking(True)
             for cmd in command_list:
                 if not cmd:
                     continue
@@ -157,23 +158,28 @@ def execute_tcp_stream(port, command_list):
                 print(f"Sending Matrix Payload: {cmd}")
                 s.sendall(payload.encode('utf-8'))
                 
-                time.sleep(0.3)
-                try:
-                    # Non-blocking check for any final response/acknowledgment
-                    s.setblocking(False)
+                # 3. Await acknowledgment for each command (including the state dump)
+                cmd_response = b""
+                cmd_start_time = time.time()
+                while time.time() - cmd_start_time < 2.0:
                     try:
-                        response = s.recv(4096).decode('utf-8', errors='ignore')
-                        if response:
-                            print(f" -> Server Response: {response.strip()}")
+                        s.setblocking(False)
+                        chunk = s.recv(16384)
+                        if chunk:
+                            cmd_response += chunk
+                            cmd_start_time = time.time() # Reset timeout if we keep receiving data
                         else:
-                            show_warning(f"No response received for command: {cmd}")
+                            break
                     except BlockingIOError:
-                        show_warning(f"BlockingIOError for command: {cmd}")
-                        pass
-                    s.setblocking(True)
-                except Exception:
-                    show_warning(f"Other Exception for command: {cmd}")
-                    pass
+                        if cmd_response and (time.time() - cmd_start_time > 0.5): break
+                        time.sleep(0.1)
+                
+                if cmd_response:
+                    # Log the response (it might be large, we just print the start/end or length if it was production)
+                    print(f" -> Server Response received ({len(cmd_response)} bytes)")
+                else:
+                    show_warning(f"No response received for command: {cmd}")
+                s.setblocking(True)
 
     except Exception as e:
         log_error_and_exit(f"Failed to transmit data to server on port {port}. Error: {str(e)}")

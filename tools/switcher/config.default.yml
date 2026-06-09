@@ -13,6 +13,8 @@ profiles:
     - '<client_command type="assign_source" output="line_output_1" source="analogue_input_1"/>'
     - '<client_command type="assign_source" output="line_output_2" source="analogue_input_2"/>'
     - '<client_command type="flash_hardware"/>'
+  keepalive:
+    - '<set devid="1"><keep-alive/></set>'
   a1_preamp_true:
     - '<set devid="1"><item id="23" value="true"/></set>'
   a1_preamp_false:

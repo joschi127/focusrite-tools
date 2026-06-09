@@ -18,12 +18,16 @@ seamlessly handle transitions between active PC usage and standalone operations.
 
 ## Project Structure
 
+- `docs/` - Project documentation.
+  - `focusrite_control_api/` - Documentation of the Focusrite Control Server XML API.
 - `tools/` - Contains individual Focusrite utilities.
   - `switcher/` - The Focusrite Switcher tool.
     - `focusrite_switcher.py` - Core automation script.
     - `playback_only.ff` - Snapshot for playback mode.
     - `standalone.ff` - Snapshot for standalone mode.
     - `install.py` - Automated installer script for Windows deployment.
+  - `send_test/` - Tool for testing communication with Focusrite Control Server.
+    - `focusrite_send_test.py` - Script to send XML commands to the server.
 - `requirements.txt` - Project dependencies.
 - `README.md` - This instruction file.
 
@@ -86,6 +90,7 @@ schtasks /run /tn "Focusrite_Playback_Startup"
 
 For further details on the Focusrite Control protocol and XML structure, the following resources are used as reference:
 
+- [Focusrite Control API Documentation](docs/focusrite_control_api/focusrite_control_api.md) (Local)
 - [Focusrite-Midi-Control](https://github.com/raduvarga/Focusrite-Midi-Control)
 - [Focusrite-Midi-Control - device-arrival.xml](https://github.com/raduvarga/Focusrite-Midi-Control/blob/master/example%20xml/device-arrival.xml)
 - [Focusrite-Midi-Control - device-set.xml](https://github.com/raduvarga/Focusrite-Midi-Control/blob/master/example%20xml/device-set.xml)

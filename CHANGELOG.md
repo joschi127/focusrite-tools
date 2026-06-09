@@ -9,11 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Added technical references for Focusrite protocol implementation in `README.md` and `.junie/AGENTS.md`.
+- Added local Focusrite Control API documentation under `docs/focusrite_control_api/`, including XML dumps and usage
+  guides.
+- Improved Focusrite Control Server communication by handling delayed full-state dumps that arrive only after the first
+  command.
+- Simplified `focusrite_send_test.py` to send both handshake and command before awaiting a unified response.
+- Updated `focusrite_switcher.py` to handle large multi-packet responses by resetting the receive timeout upon data
+  arrival.
 
 ### Changed
 - Renamed configuration key `routing` to `profiles`
 - Renamed `playback_only` to `routing_playback_only` and `standalone` to `routing_standalone` in configuration.
-- Updated `focusrite_switcher.py` to match the new configuration format using `profiles` and handle any profile name from CLI.
+- Updated `focusrite_switcher.py` to match the new configuration format using `profiles` and handle any profile name
+  from CLI.
 
 ### Added
 - Project restructuring into `focusrite-tools`, making `focusrite-switcher` one of multiple potential tools.
