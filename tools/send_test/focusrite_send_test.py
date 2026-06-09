@@ -12,7 +12,12 @@ def send_test(host="192.168.5.27", port=49673):
     # 2. Build the core XML command string
     handshake = '<client-details hostname="Junie" client-name="FocusriteSwitcher" client-id="123456"/>'
     xml_command = '<set devid="1"><keep-alive/></set>'
-    xml_command2 = '<set devid="1"><item id="799" value="Inst" /></set>'
+    
+    # Example: SET Analogue 1 Mode to 'Line'
+    xml_command2 = '<set devid="1"><item id="799" value="Line"/></set>'
+    
+    # Example: SET Mix A Input 1 Gain to -10.0 dB
+    # xml_command2 = '<set devid="1"><item id="55" value="-10.0"/></set>'
     
     # 3. FIX: Append the mandatory '\n' token to the end of the payload string
     # This signals the Focusrite Server to instantly process the buffer.
@@ -23,40 +28,40 @@ def send_test(host="192.168.5.27", port=49673):
     print(f"Connecting to Focusrite Control Server on {host}:{port}...")
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(5.0)
+            s.settimeout(10.0)
             s.connect((host, port))
             
             # 4. Handshake
             print("Sending handshake...")
             s.sendall(payload_handshake.encode('utf-8'))
             
-            print("Sending command...")
-            s.sendall(payload_command.encode('utf-8'))
-
-            #print("Sending command 2...")
-            #s.sendall(payload_command2.encode('utf-8'))
-
-            print("Awaiting response...")
-            response = b""
-            start_time = time.time()
-            # Extended timeout for the full state dump which can be large
-            while time.time() - start_time < 3.0:
-                try:
-                    s.setblocking(False)
+            # The server will send a lot of data now.
+            # We must be ready to receive it, otherwise the server might close the connection
+            # if we try to send more commands without consuming the buffer.
+            print("Awaiting responses...")
+            s.settimeout(5.0)
+            received_state = False
+            try:
+                while True:
                     chunk = s.recv(16384)
-                    if chunk:
-                        response += chunk
-                        start_time = time.time() # Reset timeout on data
-                    else:
-                        break
-                except BlockingIOError:
-                    if response and (time.time() - start_time > 0.5): break
-                    time.sleep(0.1)
-            
-            if response:
-                print(f"\n[SERVER RESPONSE]:\n{response.decode('utf-8', errors='ignore')}")
-            else:
-                print("\n[SERVER RESPONSE]: No data received.")
+                    if not chunk: break
+                    if b"</set>" in chunk:
+                        received_state = True
+                        print("Received full state dump.")
+                        # After state dump, we can try to send our command
+                        print("Sending SET command...")
+                        s.sendall(payload_command2.encode('utf-8'))
+                    
+                    # Also send keep-alives periodically if this was a long-running script
+            except socket.timeout:
+                if not received_state:
+                    print("Timeout waiting for state dump. Server might be unresponsive.")
+                else:
+                    print("Done receiving for now.")
+            except ConnectionResetError:
+                print("Connection reset by peer. This often happens when sending invalid SET commands.")
+            except Exception as e:
+                print(f"Error: {e}")
                 
     except Exception as e:
         print(f"Socket Communication Error: {e}")
