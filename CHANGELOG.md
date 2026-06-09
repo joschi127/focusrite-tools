@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Documented how to switch the analogue input mode between `Line` and `Inst` via the `<mode>` element (e.g. id `799`
+  for `Analogue 1`) in `docs/focusrite_control_api/focusrite_control_api.md`, including the selectable `<enum>` values
+  and the `<set devid="1"><item id="799" value="..."/></set>` command syntax.
+- Documented how to switch the routing profile (preset) via the `<preset>` element (id `6`) in
+  `docs/focusrite_control_api/focusrite_control_api.md`, including the selectable `<enum>` values and the
+  `<set devid="1"><item id="6" value="..."/></set>` command syntax.
+
 ### Fixed
 - Identified the true reason `<set>` commands had no effect: a live test against a real Scarlett 18i8 server showed
   the server replies with `<approval ... authorised="false"/>`. While the client is not approved/trusted in the

@@ -48,17 +48,21 @@ def send_test(host="192.168.5.27", port=49673):
     xml_subscribe = '<device-subscribe devid="1" subscribe="true"/>'
     xml_keepalive = '<keep-alive/>'
 
+    # Example: Switch to preset '8 Channel Analogue'
+    xml_command1 = '<set devid="1"><item id="6" value="8 Channel Analogue"/></set>'
+
     # Example: SET Analogue 1 Mode to 'Inst'
-    xml_command = '<set devid="1"><item id="799" value="Inst"/></set>'
+    xml_command2 = '<set devid="1"><item id="799" value="Inst"/></set>'
 
     # Example: SET Mix A Input 1 Gain to -10.0 dB
-    xml_command2 = '<set devid="1"><item id="55" value="-10.0"/></set>'
+    xml_command3 = '<set devid="1"><item id="55" value="-10.0"/></set>'
 
     payload_handshake = frame(xml_handshake)
     payload_subscribe = frame(xml_subscribe)
     payload_keepalive = frame(xml_keepalive)
-    payload_command = frame(xml_command)
+    payload_command1 = frame(xml_command1)
     payload_command2 = frame(xml_command2)
+    payload_command3 = frame(xml_command3)
 
     print(f"Connecting to Focusrite Control Server on {host}:{port}...")
     try:
@@ -76,14 +80,19 @@ def send_test(host="192.168.5.27", port=49673):
             s.sendall(payload_subscribe.encode('utf-8'))
             time.sleep(0.5)
 
-            # Sending command
-            print(f"Sending command: {xml_command}")
-            s.sendall(payload_command.encode('utf-8'))
+            # Sending command1
+            print(f"Sending command1: {xml_command1}")
+            s.sendall(payload_command1.encode('utf-8'))
             time.sleep(0.5)
 
             # Sending command2
             print(f"Sending command2: {xml_command2}")
             s.sendall(payload_command2.encode('utf-8'))
+            time.sleep(0.5)
+
+            # Sending command3
+            print(f"Sending command3: {xml_command3}")
+            s.sendall(payload_command3.encode('utf-8'))
             time.sleep(0.5)
 
             # Sending keep-alive (which will give us the current state of the device)
@@ -129,7 +138,7 @@ def send_test(host="192.168.5.27", port=49673):
 
                 # Extract values for IDs 55, 57, 798 and 799
                 print("\n[EXTRACTED VALUES]:")
-                for target_id in ["55", "798", "799"]:
+                for target_id in ["6", "55", "798", "799"]:
                     # Find all occurrences and take the last one (most recent state)
                     matches = re.findall(f'(<item id="{target_id}" value="([^"]*)"/>)', decoded_response)
                     if matches:

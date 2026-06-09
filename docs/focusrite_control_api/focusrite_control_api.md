@@ -25,16 +25,16 @@ available options.
 
 For example, within `device-arrival.xml` we can find the definition of the `Analogue 1` input which looks like this:
 
-        <analogue id="795" supports-talkback="false" hidden="false" name="Analogue 1" stereo-name="Analogue 1-2">
-            <available id="797"/>
-            <meter id="798"/>
-            <nickname id="796"/>
-            <mode id="799">
-                <enum value="Line"/>
-                <enum value="Inst"/>
-            </mode>
-            <pad id="800"/>
-        </analogue>
+      <analogue id="795" supports-talkback="false" hidden="false" name="Analogue 1" stereo-name="Analogue 1-2">
+         <available id="797"/>
+         <meter id="798"/>
+         <nickname id="796"/>
+         <mode id="799">
+             <enum value="Line"/>
+             <enum value="Inst"/>
+         </mode>
+         <pad id="800"/>
+      </analogue>
 
 It tells us that:
 - The `id` for the meter of `Analogue 1` input is `798`. 
@@ -42,12 +42,35 @@ It tells us that:
 
 And within `set.xml` we can find the current values for these options:
 
-        <item id="798" value="-51.417"/>
-        <item id="799" value="Line"/>
+      <item id="798" value="-51.417"/>
+      <item id="799" value="Line"/>
 
 So this tells us that:
 - The meter of `Analogue 1` is set to `-51.417` dB.
 - The mode switch of `Analogue 1` is set to `Line`
+
+Within `device-arrival.xml` we can also find the mixes matrix, which is a list of all the mixes and their inputs:
+
+      <mixes>
+          <mix id="54" name="Mix A" stereo-name="Mix A">
+              <meter id="127"/>
+              <input>
+                  <gain id="55"/>
+                  <pan id="56"/>
+                  <mute id="57"/>
+                  <solo id="58"/>
+              </input>
+              <!-- ... -->
+         </mix>
+         <!-- ... -->
+      </mixes>
+
+And like for the inputs itself, in `set.xml` we can find the current values for these options:
+
+      <item id="55" value="0"/>
+
+And it tells us that:
+- The gain of `Mix A` input 1 is currewntly set to `0` dB.
 
 
 ## Important Note on Server Communication & Connection Resets
@@ -92,22 +115,80 @@ The actual volume/gain control for a mixer input is found within the `<mixer>` -
 
 For example, in `Mix A` (id `54`), you can find the gain control for the first input:
 
-        <mix id="54" name="Mix A" stereo-name="Mix A">
-            <input>
-                <gain id="55"/>
-                <pan id="56"/>
-                <mute id="57"/>
-                <solo id="58"/>
-            </input>
-        </mix>
+      <mix id="54" name="Mix A" stereo-name="Mix A">
+         <input>
+             <gain id="55"/>
+             <pan id="56"/>
+             <mute id="57"/>
+             <solo id="58"/>
+         </input>
+      </mix>
 
 So to set the gain of `Mix A` input 1 to -10 dB, we send the following XML payload (using the correct framing and
 **after** having subscribed to the device via `<device-subscribe devid="1" subscribe="true"/>`):
 
-        <set devid="1"><item id="55" value="-10.0"/></set>
+      <set devid="1"><item id="55" value="-10.0"/></set>
 
 The target id (`55`) and the `<set>`/`<item>` syntax were correct all along. A live test against a real Scarlett
 18i8 server finally revealed the true reason earlier `<set>` commands had no effect: the server responded with
 `authorised="false"`, meaning this client had not been approved in the Focusrite Control desktop application (see
 point 4 above). While unapproved, the server silently ignores every `<set>`. After approving the client (and keeping
 the same `client-key`), the identical command above changes the value as expected.
+
+
+### How to Switch the Input Mode (Line / Inst)
+
+Some analogue inputs can be switched between `Line` and `Inst(rument)` mode. These inputs expose a `<mode>` element
+in `device-arrival.xml`, which lists the selectable values as `<enum>` entries. For `Analogue 1` (input id `795`) the
+mode control is defined with id `799`:
+
+      <analogue id="795" supports-talkback="false" hidden="false" name="Analogue 1" stereo-name="Analogue 1-2">
+         <available id="797"/>
+         <meter id="798"/>
+         <nickname id="796"/>
+         <mode id="799">
+             <enum value="Line"/>
+             <enum value="Inst"/>
+         </mode>
+         <pad id="800"/>
+      </analogue>
+
+To switch the input mode, send a `<set>` for the `<mode>` id using one of the `<enum value="..."/>` names exactly as
+listed above. For example, to switch `Analogue 1` to instrument mode:
+
+      <set devid="1"><item id="799" value="Inst"/></set>
+
+To switch it back to line level, send `value="Line"` instead:
+
+      <set devid="1"><item id="799" value="Line"/></set>
+
+Only the inputs that actually contain a `<mode>` element support this switch (on the Scarlett 18i8 2nd Gen these are
+`Analogue 1` with id `799` and `Analogue 2` with id `805`). The same framing,
+`<device-subscribe devid="1" subscribe="true"/>` subscription and client approval requirements described above apply
+here as well.
+
+
+### How to Switch the Routing Profile (Preset)
+
+The device exposes its built-in routing presets through the `<preset>` element in `device-arrival.xml`. For the
+Scarlett 18i8 (2nd Gen) it is defined with id `6` and lists the selectable preset names as `<enum>` values:
+
+      <preset id="6">
+         <enum value="Direct Routing"/>
+         <enum value="System Playback"/>
+         <enum value="2 Channel Analogue"/>
+         <enum value="8 Channel Analogue"/>
+         <enum value="Digital"/>
+         <enum value="Analogue + Digital"/>
+         <enum value="Empty"/>
+      </preset>
+
+To switch the active routing profile, send a `<set>` for id `6` using one of the `<enum value="..."/>` names exactly
+as listed above. For example, to load the `8 Channel Analogue` preset:
+
+        <set devid="1"><item id="6" value="8 Channel Analogue"/></set>
+
+Please note: For some reason the current value of `id="6"` is not reported in the full state dump (`set.xml`).
+
+The same framing, `<device-subscribe devid="1" subscribe="true"/>` subscription and client approval requirements
+described above apply here as well.
