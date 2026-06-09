@@ -11,6 +11,9 @@ request.
 
 For details, also see `focusrite_send_test.py`, which we used to send the handshake and keepalive requests.
 
+The handshake request will give us the `device-arrival` response, while the keepalive request will give us the `set`
+response with the current state of the device.
+
 
 ## How to read available device options from handshake response
 
@@ -49,20 +52,19 @@ So this tells us that:
 
 ## Important Note on Server Communication & Connection Resets
 
-The Focusrite Control Server is extremely sensitive to protocol state and command targets. If it receives a command it
-doesn't like or if the command is sent at the wrong time (e.g., before the initial state dump is finished), it will
-instantly close the connection, resulting in a `Connection reset by peer` error.
+The Focusrite Control Server can be sensitive to protocol state and command targets. While some invalid commands might
+be ignored, others can cause the server to instantly close the connection, resulting in a `Connection reset by peer`
+error.
 
-Common causes for connection resets:
-1. **Targeting Read-Only Options:** Some options, such as `<meter>` elements (e.g., id `798`), are status indicators and
-   cannot be modified.
-2. **Incorrect XML Format:** Ensure the XML is properly wrapped (usually in `<set devid="1">...</set>`) and ends with a
-   `\n` character.
-3. **Protocol Synchronization:** Always wait for the initial `device-arrival` and `set` (full state) dumps after the
-   handshake before sending your first `<set>` command.
+Common pitfalls and behaviors:
+1. **Incorrect Protocol Framing:** Commands MUST be prefixed with `Length=XXXXXX ` (where XXXXXX is the 6-digit length
+   of the XML payload) and MUST end with a `\n` character. If the framing is missing or incorrect, the server will
+   not process the command.
 
 
 ### How to Control Input Volume (Gain)
+
+Importand: the information in this paragraph is not yet confirmed and SEEMS TO BE WRONG.
 
 While the `<analogue>` element in `device-arrival.xml` might only show a `<meter>` and `<mode>`, the actual volume/gain
 control for an input is typically found within the `<mixer>` -> `<mixes>` section. 

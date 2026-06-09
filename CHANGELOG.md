@@ -6,15 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Added
-- Documentation regarding protocol synchronization and volume (gain) control IDs in `focusrite_control_api.md`.
-- Improved robust communication handling in `focusrite_send_test.py` to wait for server state before sending commands.
-
-### Fixed
-- Clarified that `Connection reset by peer` is caused by various protocol timing and target issues, not just read-only parameters.
-- Identified that input volume (gain) is controllable via mixer input IDs (e.g., id `55`), whereas `id="798"` is indeed a read-only meter.
 
 ### Added
+- Added response parsing to `focusrite_send_test.py` to extract and print specific item values (IDs 55, 798, 799) for
+  easier verification of changes.
 - Added technical references for Focusrite protocol implementation in `README.md` and `.junie/AGENTS.md`.
 - Added local Focusrite Control API documentation under `docs/focusrite_control_api/`, including XML dumps and usage
   guides.
