@@ -24,7 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved `install.py` to `tools/switcher/` directory as it is specific to the switcher tool.
 
 ### Fixed
-- Reinstalled dependencies in `.venv` to ensure clean environment state.
+- Performance issue in `focusrite_switcher.py` where sending routing commands took a long time due to waiting for
+  server responses that were not always sent.
 - Prevented `focusrite_switcher.py` from overwriting `~` (null) values and missing keys in `config.yml` with defaults.
 - Fixed configuration path resolution in `focusrite_switcher.py` to correctly locate files when imported or launched
   from different directories.

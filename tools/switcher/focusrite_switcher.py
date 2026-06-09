@@ -83,8 +83,6 @@ TIMEOUT = CONFIG["network"]["timeout"]
 
 PLAYBACK_ONLY_COMMANDS = CONFIG["routing"]["playback_only"]
 STANDALONE_COMMANDS = CONFIG["routing"]["standalone"]
-FLASH_HARDWARE_COMMAND = CONFIG["routing"]["flash_command"]
-# ==============================================================================
 
 def show_warning(message):
     """Logs a warning to the console and shows a message box if on Windows."""
@@ -136,7 +134,7 @@ def find_active_server_port():
     return None
 
 
-def execute_tcp_stream(port, command_list, should_flash=False):
+def execute_tcp_stream(port, command_list):
     """Establishes a single socket context and fires sequentially bounded string packages."""
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -154,37 +152,32 @@ def execute_tcp_stream(port, command_list, should_flash=False):
             s.setblocking(True)
             
             for cmd in command_list:
+                if not cmd:
+                    continue
+
                 # Generate strict length-prefix packet framing with trailing delimiter
                 payload = f"Length={len(cmd):06d} {cmd}\n"
                 print(f"Sending Matrix Payload: {cmd}")
                 s.sendall(payload.encode('utf-8'))
                 
-                # Await server processing and response
-                time.sleep(0.1)
+                time.sleep(0.3)
                 try:
-                    response = s.recv(4096).decode('utf-8', errors='ignore')
-                    if response:
-                        print(f" -> Server Response: {response.strip()}")
-                    else:
-                        show_warning(f"No response received for command: {cmd}")
-                except socket.timeout:
-                    show_warning(f"Timeout reached while waiting for response to command: {cmd}")
-                
-            if should_flash:
-                flash_payload = f"Length={len(FLASH_HARDWARE_COMMAND):06d} {FLASH_HARDWARE_COMMAND}\n"
-                print("Sending non-volatile hardware save flash...")
-                s.sendall(flash_payload.encode('utf-8'))
-                
-                time.sleep(0.2)
-                try:
-                    response = s.recv(4096).decode('utf-8', errors='ignore')
-                    if response:
-                        print(f" -> Server Response: {response.strip()}")
-                    else:
-                        show_warning("No response received for hardware flash command.")
-                except socket.timeout:
-                    show_warning("Timeout reached while waiting for response to hardware flash command.")
-                
+                    # Non-blocking check for any final response/acknowledgment
+                    s.setblocking(False)
+                    try:
+                        response = s.recv(4096).decode('utf-8', errors='ignore')
+                        if response:
+                            print(f" -> Server Response: {response.strip()}")
+                        else:
+                            show_warning(f"No response received for command: {cmd}")
+                    except BlockingIOError:
+                        show_warning(f"BlockingIOError for command: {cmd}")
+                        pass
+                    s.setblocking(True)
+                except Exception:
+                    show_warning(f"Other Exception for command: {cmd}")
+                    pass
+
     except Exception as e:
         log_error_and_exit(f"Failed to transmit data to server on port {port}. Error: {str(e)}")
 
@@ -206,11 +199,11 @@ def execute_routing(mode):
 
     if mode == "playback_only":
         print("Switching matrix to Playback Only configuration...")
-        execute_tcp_stream(port, PLAYBACK_ONLY_COMMANDS, should_flash=False)
+        execute_tcp_stream(port, PLAYBACK_ONLY_COMMANDS)
         
     elif mode == "standalone":
         print("Switching matrix to Standalone Hardware routing...")
-        execute_tcp_stream(port, STANDALONE_COMMANDS, should_flash=True)
+        execute_tcp_stream(port, STANDALONE_COMMANDS)
 
 
 if __name__ == "__main__":
