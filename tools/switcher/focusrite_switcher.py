@@ -158,7 +158,9 @@ def execute_commands(port, command_list):
             # 2. Subscribe to the device. REQUIRED before the server accepts any <set> command.
             client.subscribe(devid="1")
 
-            # 3. Send the actual commands. <set> commands intentionally return no direct response.
+            # 3. Send the actual commands. <set> commands intentionally return no direct response and we
+            #    do NOT read after each one - reading mid-stream interrupts the server's reconfiguration
+            #    (this is what made routing-profile switches like "System Playback" fail).
             for cmd in command_list:
                 if not cmd:
                     continue
@@ -166,12 +168,14 @@ def execute_commands(port, command_list):
                 print(f"Sending command: {cmd}")
                 client.send_command(cmd)
 
-            # 4. Confirm by pulling the current device state via a keep-alive. A connection reset here is an
-            #    expected side effect of a routing-profile change, so we tolerate it instead of failing.
+            # 4. Read the server response ONCE after all commands have been sent, exactly like the standalone
+            #    test script does. A connection reset here is an expected side effect of a routing-profile
+            #    change, so we tolerate it instead of failing.
             try:
-                state = client.keep_alive()
+                state = client.receive()
                 if state:
                     print(f" -> Commands sent; received {len(state)} bytes of device state.")
+                    print(f" -> State dump:\n{state.decode('utf-8', errors='ignore')}")
                 else:
                     print(" -> Commands sent (no state dump returned by the server).")
             except FocusriteClientError:

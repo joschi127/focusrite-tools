@@ -7,12 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- Added commands to the `computer` profile in `config.default.yml` that mute the first 8 inputs (the 8 analogue
-  inputs) of the first mix (Mix A, id `54`) via `<set>` on mute ids 57, 61, 65, 69, 73, 77, 81 and 85. The
-  `standalone` profile sets the same inputs to not muted (`value="false"`).
-
 ### Fixed
+- Fixed `focusrite_switcher.py` failing to apply the `System Playback` routing-profile switch (while
+  `8 Channel Analogue` worked). The real cause was the `network.timeout` value (used for the TCP port scan in
+  `find_active_server_port()`) being too short at `0.02s`, which made server detection/connection unreliable.
+  Raising it to `0.2s` in `config.default.yml` (and `config.yml`) resolves the issue.
 - Fixed `focusrite_switcher.py` reporting `WARNING: No response received for command: ...` and appearing not to
   work even though the routing-profile switch was actually applied. A `<set>` command does not produce its own
   reply (the server applies it silently and only reflects the new value in its state dump), so the per-command
@@ -32,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   8-digit client key on startup and persists it to `config.yml` so the Focusrite Control approval stays stable.
 
 ### Changed
+- Aligned `focusrite_switcher.py` with the reference script `focusrite_send_test.py` by sending all commands
+  first and reading the server response only once at the end instead of after every command:
+  `FocusriteClient.send_command()` no longer reads per command, a new public `FocusriteClient.receive()` method
+  performs a single read, and `execute_commands()` sends every command and then reads once.
 - Moved all Focusrite Control Server communication out of `focusrite_switcher.py` into a new reusable
   `tools/switcher/focusrite_client.py` module (`FocusriteClient`, `frame()`, `find_active_server_port()`).
 - Updated `focusrite_switcher.py` to use the cleaned-up and fixed protocol via `focusrite_client.py`: correct

@@ -98,7 +98,7 @@ class FocusriteClient:
 
     # -- Protocol steps ---------------------------------------------------------------------------------
 
-    def handshake(self, wait=0.1):
+    def handshake(self, wait=0.5):
         """Send the client-details handshake. Returns the (possibly empty) initial server response."""
         xml = '<client-details hostname="{}" client-key="{}"/>'.format(self.hostname, self.client_key)
         self._send(xml)
@@ -106,7 +106,7 @@ class FocusriteClient:
             time.sleep(wait)
         return self._drain()
 
-    def subscribe(self, devid="1", wait=0.1):
+    def subscribe(self, devid="1", wait=0.5):
         """Subscribe to a device. REQUIRED before the server accepts any `<set>` command for it."""
         xml = '<device-subscribe devid="{}" subscribe="true"/>'.format(devid)
         self._send(xml)
@@ -114,16 +114,30 @@ class FocusriteClient:
             time.sleep(wait)
         return self._drain()
 
-    def send_command(self, xml, wait=0.0, read_timeout=2.0):
-        """Send a single raw XML command (e.g. a `<set>` element) and return the server response bytes."""
+    def send_command(self, xml, wait=0.5):
+        """Send a single raw XML command (e.g. a `<set>` element).
+
+        IMPORTANT: this intentionally does NOT read from the socket. The reference test script
+        (`tools/send_test/focusrite_send_test.py`) sends all commands first and only reads the server
+        response ONCE at the end. Reading after every command (as we used to) consumes/interrupts the
+        server's reconfiguration stream and is why routing-profile switches like `System Playback` failed.
+        Call `receive()` once after all commands have been sent to collect the response.
+        """
         self._send(xml)
         if wait:
             time.sleep(wait)
-        return self._receive(read_timeout)
 
-    def keep_alive(self, wait=0.1, read_timeout=2.0):
-        """Send a bare `<keep-alive/>` element (also returns the current state dump from the server)."""
-        return self.send_command('<keep-alive/>', wait=wait, read_timeout=read_timeout)
+    def keep_alive(self, wait=0.5):
+        """Send a bare `<keep-alive/>` element (pulls the current state dump on the next `receive()`)."""
+        self.send_command('<keep-alive/>', wait=wait)
+
+    def receive(self, read_timeout=5.0):
+        """Read the server response ONCE, until the server goes quiet for ``read_timeout`` seconds.
+
+        This mirrors the standalone test script: send everything first, then read a single time. Returns
+        the raw response bytes (possibly empty).
+        """
+        return self._receive(read_timeout)
 
     # -- Low level helpers ------------------------------------------------------------------------------
 
@@ -136,11 +150,11 @@ class FocusriteClient:
         except Exception as e:
             raise FocusriteClientError("Failed to send data to server: {}".format(e))
 
-    def _drain(self, read_timeout=0.5):
+    def _drain(self, read_timeout= 1.0):
         """Read any immediately available data without blocking for long."""
         return self._receive(read_timeout)
 
-    def _receive(self, read_timeout):
+    def _receive(self, read_timeout = 5.0):
         """Receive data from the server until it goes quiet for ``read_timeout`` seconds."""
         if self._socket is None:
             raise FocusriteClientError("Not connected to a Focusrite Control Server.")

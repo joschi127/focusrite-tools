@@ -3,14 +3,12 @@ network:
     port_range:
         - 49670
         - 50000
-    timeout: 0.02
+    timeout: 0.2
     last_successful_port: null
     client_key: null
 profiles:
     computer:
         - '<set devid="1"><item id="6" value="System Playback"/></set>'
-        # todo: remove flash_hardware command once this is working reliably
-        - '<client_command type="flash_hardware"/>'
     standalone:
         - '<set devid="1"><item id="6" value="8 Channel Analogue"/></set>'
         - '<client_command type="flash_hardware"/>'
