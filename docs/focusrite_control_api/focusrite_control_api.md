@@ -8,7 +8,7 @@ In the files
 - [device-arrival.xml](xml/scarlett-18i8-2nd-gen/device-arrival.xml)
 - [set.xml](xml/scarlett-18i8-2nd-gen/set.xml)
 
-- you can find a dump of the XML data that Focusrite Control Server sends to us, after sending a handshake and a keepalive
+you can find a dump of the XML data that Focusrite Control Server sends to us, after sending a handshake and a keepalive
 request.
 
 For details, also see `focusrite_send_test.py`, which we used to send the handshake and keepalive requests.
