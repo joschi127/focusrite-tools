@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   8-digit client key on startup and persists it to `config.yml` so the Focusrite Control approval stays stable.
 
 ### Changed
+- Updated `install.py` to create two executables: `focusrite_switcher.exe` (with console) and
+  `focusrite_switcher_noconsole.exe` (without console).
+- Updated Windows startup task to use the `noconsole` version for a cleaner background experience.
+- Updated `install.py` to copy `config.default.yml` to the target installation directory.
 - Aligned `focusrite_switcher.py` with the reference script `focusrite_send_test.py` by sending all commands
   first and reading the server response only once at the end instead of after every command:
   `FocusriteClient.send_command()` no longer reads per command, a new public `FocusriteClient.receive()` method
