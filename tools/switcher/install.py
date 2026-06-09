@@ -164,6 +164,9 @@ def initial_hardware_flash():
     """Executes the newly deployed EXE once to apply and flash the 'standalone' profile."""
     print("Step 4: Executing one-time hardware initialization (Standalone Profile)...")
 
+    original_cwd = os.getcwd()
+    os.chdir(TARGET_DIR)
+
     try:
         # Run the deployed EXE directly with the 'standalone' parameter
         subprocess.check_call([EXE_PATH, "standalone"])
@@ -173,6 +176,8 @@ def initial_hardware_flash():
         print(f" -> and the Focusrite Control Server is running.")
         print(f" -> Make sure you authorized the client within the Focusrite Control Desktop App!")
         print(f" -> Details: {e}")
+    finally:
+        os.chdir(original_cwd)
 
 if __name__ == "__main__":
     print("====================================================")

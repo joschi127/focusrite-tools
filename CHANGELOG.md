@@ -35,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `focusrite_switcher_noconsole.exe` (without console).
 - Updated Windows startup task to use the `noconsole` version for a cleaner background experience.
 - Updated `install.py` to copy `config.default.yml` to the target installation directory.
+- Updated `install.py` to change the working directory to the target installation directory before running the
+  hardware initialization flash and revert to the original directory afterwards.
 - Aligned `focusrite_switcher.py` with the reference script `focusrite_send_test.py` by sending all commands
   first and reading the server response only once at the end instead of after every command:
   `FocusriteClient.send_command()` no longer reads per command, a new public `FocusriteClient.receive()` method
