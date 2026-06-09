@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added a `network.client_key` configuration option for the switcher tool (default `null` in
+  `config.default.yml`). When the value is still `null`, `focusrite_switcher.py` auto-generates a random
+  8-digit client key on startup and persists it to `config.yml` so the Focusrite Control approval stays stable.
+
+### Changed
+- Moved all Focusrite Control Server communication out of `focusrite_switcher.py` into a new reusable
+  `tools/switcher/focusrite_client.py` module (`FocusriteClient`, `frame()`, `find_active_server_port()`).
+- Updated `focusrite_switcher.py` to use the cleaned-up and fixed protocol via `focusrite_client.py`: correct
+  6-digit uppercase hex length-prefix framing (no trailing newline), a `client-key` handshake, the mandatory
+  `<device-subscribe devid="N" subscribe="true"/>` step before sending commands, and a warning when the server
+  reports `authorised="false"` (client not yet approved in the Focusrite Control desktop application).
+- `focusrite_send_test.py` was intentionally kept standalone and untouched as a simple one-file testing script.
+
+### Added
 - Documented how to switch the analogue input mode between `Line` and `Inst` via the `<mode>` element (e.g. id `799`
   for `Analogue 1`) in `docs/focusrite_control_api/focusrite_control_api.md`, including the selectable `<enum>` values
   and the `<set devid="1"><item id="799" value="..."/></set>` command syntax.

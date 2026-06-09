@@ -1,8 +1,11 @@
 import sys
 import os
-import socket
 import time
+import random
 import yaml
+
+from focusrite_client import FocusriteClient, FocusriteClientError, find_active_server_port
+
 try:
     import win32gui
     import win32con
@@ -73,6 +76,28 @@ def load_config():
     
     return config, loaded_config
 
+def ensure_client_key(config, loaded_config):
+    """Return a stable client key, generating and persisting a random 8-digit one if not set yet.
+
+    The client key identifies this client to the Focusrite Control Server and the user's approval is
+    bound to it, so it must stay stable. If the configured value is still null (~), a random 8-digit
+    key is generated once and written back to config.yml.
+    """
+    client_key = config["network"].get("client_key")
+    if client_key:
+        return client_key
+
+    client_key = "".join(str(random.randint(0, 9)) for _ in range(8))
+    config["network"]["client_key"] = client_key
+
+    # Persist into config.yml without filling in the other defaults.
+    if "network" not in loaded_config:
+        loaded_config["network"] = {}
+    loaded_config["network"]["client_key"] = client_key
+    save_config(loaded_config)
+
+    return client_key
+
 # Load active configuration
 CONFIG, LOADED_CONFIG = load_config()
 
@@ -80,6 +105,7 @@ CONFIG, LOADED_CONFIG = load_config()
 HOST = CONFIG["network"]["host"]
 PORT_START, PORT_END = CONFIG["network"]["port_range"]
 TIMEOUT = CONFIG["network"]["timeout"]
+CLIENT_KEY = ensure_client_key(CONFIG, LOADED_CONFIG)
 
 def show_warning(message):
     """Logs a warning to the console and shows a message box if on Windows."""
@@ -103,90 +129,47 @@ def log_error_and_exit(message):
     sys.exit(1)
 
 
-def find_active_server_port():
-    last_port = CONFIG["network"].get("last_successful_port")
-    if last_port:
-        print(f"Trying last successful port: {last_port}...")
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.settimeout(TIMEOUT)
-                if s.connect_ex((HOST, last_port)) == 0:
-                    print(f" -> Found Focusrite Control Server on last saved successful port {last_port}")
-                    return last_port
-        except Exception:
-            pass
+def execute_commands(port, command_list):
+    """Opens a single connection and runs the full protocol: handshake, device-subscribe, then the commands.
 
-    print(f"Scanning local TCP ports {PORT_START}-{PORT_END}...")
-    for port in range(PORT_START, PORT_END + 1):
-        if port == last_port:
-            continue
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.settimeout(TIMEOUT)
-                if s.connect_ex((HOST, port)) == 0:
-                    print(f" -> Found Focusrite Control Server on TCP port {port}")
-                    return port
-        except Exception:
-            continue
-    return None
-
-
-def execute_tcp_stream(port, command_list):
-    """Establishes a single socket context and fires sequentially bounded string packages."""
-    handshake = '<client-details hostname="focusrite-tools" client-name="FocusriteSwitcher" client-id="123456"/>'
-    payload_handshake = f"Length={len(handshake):06d} {handshake}\n"
-
+    All low-level server communication (correct length-prefix framing, handshake with `client-key`, the
+    mandatory `<device-subscribe .. subscribe="true"/>` step and the receive loop) is handled by
+    `FocusriteClient` in `focusrite_client.py`.
+    """
     try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(5.0)
-            s.connect((HOST, port))
-            
-            # 1. Send Handshake and Initial Command(s)
-            s.sendall(payload_handshake.encode('utf-8'))
-            
-            # We don't wait for handshake response separately as some servers
-            # only send the full state dump after the first real command.
-            
-            # 2. Send actual commands
-            s.setblocking(True)
+        with FocusriteClient(HOST, port, timeout=5.0, client_key=CLIENT_KEY) as client:
+            # 1. Handshake. The response carries the approval state; while authorised="false" the server
+            #    silently ignores every <set> until the client is trusted in the Focusrite Control app.
+            handshake_response = client.handshake()
+            if b'authorised="false"' in handshake_response:
+                show_warning(
+                    "This client is not approved yet (authorised=\"false\"). The Focusrite Control Server "
+                    "will ignore all commands until you approve this client in the Focusrite Control "
+                    "desktop application.")
+
+            # 2. Subscribe to the device. REQUIRED before the server accepts any <set> command.
+            client.subscribe(devid="1")
+
+            # 3. Send the actual commands.
             for cmd in command_list:
                 if not cmd:
                     continue
 
-                # Generate strict length-prefix packet framing with trailing delimiter
-                payload = f"Length={len(cmd):06d} {cmd}\n"
-                print(f"Sending Matrix Payload: {cmd}")
-                s.sendall(payload.encode('utf-8'))
-                
-                # 3. Await acknowledgment for each command (including the state dump)
-                cmd_response = b""
-                cmd_start_time = time.time()
-                while time.time() - cmd_start_time < 2.0:
-                    try:
-                        s.setblocking(False)
-                        chunk = s.recv(16384)
-                        if chunk:
-                            cmd_response += chunk
-                            cmd_start_time = time.time() # Reset timeout if we keep receiving data
-                        else:
-                            break
-                    except BlockingIOError:
-                        if cmd_response and (time.time() - cmd_start_time > 0.5): break
-                        time.sleep(0.1)
-                
+                print(f"Sending command: {cmd}")
+                cmd_response = client.send_command(cmd)
+
                 if cmd_response:
-                    # Log the response (it might be large, we just print the start/end or length if it was production)
-                    print(f" -> Server Response received ({len(cmd_response)} bytes)")
+                    print(f" -> Server response received ({len(cmd_response)} bytes)")
                 else:
                     show_warning(f"No response received for command: {cmd}")
-                s.setblocking(True)
 
-    except Exception as e:
+    except (FocusriteClientError, Exception) as e:
         log_error_and_exit(f"Failed to transmit data to server on port {port}. Error: {str(e)}")
 
 
-def execute_profile(profile_name):
-    port = find_active_server_port()
+def switch_to_profile(profile_name):
+    port = find_active_server_port(
+        HOST, PORT_START, PORT_END, TIMEOUT, CONFIG["network"].get("last_successful_port"))
     if not port:
         log_error_and_exit("Could not detect an active Focusrite Control Server instance.")
 
@@ -204,8 +187,8 @@ def execute_profile(profile_name):
     if not commands:
         log_error_and_exit(f"Profile '{profile_name}' not found in configuration.")
 
-    print(f"Executing profile: {profile_name}...")
-    execute_tcp_stream(port, commands)
+    print(f"Switching to profile: {profile_name}...")
+    execute_commands(port, commands)
 
 
 if __name__ == "__main__":
@@ -214,6 +197,6 @@ if __name__ == "__main__":
         mode = sys.argv[1]
 
     try:
-        execute_profile(mode)
+        switch_to_profile(mode)
     except Exception as e:
         log_error_and_exit(f"An unexpected runtime exception occurred:\n{str(e)}")

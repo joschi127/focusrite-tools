@@ -26,7 +26,7 @@ import re
 #    Focusrite Control desktop application before the server will apply ANY <set>. After the handshake the server
 #    replies with <approval ... authorised="false"/> until the user approves this client in Focusrite Control.
 #    While authorised="false", reads/handshake/subscribe all still work, but every <set> is silently ignored.
-#    The approval is bound to the client-key (here "123456"); keep it stable so you only have to approve once.
+#    The approval is bound to the client-key (here "12345678"); keep it stable so you only have to approve once.
 #    Open Focusrite Control -> the new remote client appears and must be allowed/trusted; then re-run this script
 #    and authorised will become "true" and the value changes will take effect.
 #
@@ -44,7 +44,7 @@ def frame(xml: str) -> str:
 
 def send_test(host="192.168.5.27", port=49673):
     # 1. Build the core XML command strings
-    xml_handshake = '<client-details hostname="focusrite-tools" client-key="123456"/>'
+    xml_handshake = '<client-details hostname="focusrite-tools" client-key="12345678"/>'
     xml_subscribe = '<device-subscribe devid="1" subscribe="true"/>'
     xml_keepalive = '<keep-alive/>'
 
