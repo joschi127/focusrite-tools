@@ -1,5 +1,8 @@
 # Roadmap
 
+## Open Issues
+- [ ] Fix port probe which is currently sometimes detecting port 49672 though it should be 49672.
+
 ## Current Goals
 - [x] Restructure project into `focusrite-tools` to accommodate multiple utilities.
 - [x] Automate Focusrite Scarlett 18i8 routing profile switching.
