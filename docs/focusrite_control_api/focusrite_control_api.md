@@ -115,7 +115,14 @@ Common pitfalls and behaviors:
     the `subscribe="true"` subscription and the `<set>`/`<item>` syntax were all already correct - the values only
     stayed unchanged because the response reported `authorised="false"`.)
 5. **Higher delay/timeout** might be required for loading one of the built-in routing presets.
-6. **Device id (`devid`) is dynamic — always read it from `device-arrival`:** The `devid` attribute used in
+6. **There is no `<client_command type="flash_hardware"/>` command** (for Scarlett 2nd/3rd Gen): the Focusrite
+    Control Server **automatically persists every `<set>` change to the hardware at all times**. The official
+    Focusrite Control user guides confirm this: *"Once the Scarlett's internal mixer has been configured by
+    Focusrite Control, that configuration is retained by the hardware at all times."* A separate "flash" or
+    "save to hardware" step does not exist in the API and is not needed. (This command may have originated from
+    speculation or from older/different Clarett hardware; it is absent from all known reverse-engineered
+    implementations and API captures.)
+7. **Device id (`devid`) is dynamic — always read it from `device-arrival`:** The `devid` attribute used in
     `<device-subscribe devid="N" subscribe="true"/>` and every `<set devid="N">` command is **not** a fixed
     constant.  Although `id="1"` is common, the server can assign a different value (e.g. `id="2"`) after a USB
     re-enumeration or a service restart. Using a hard-coded `devid="1"` in that situation causes all `<set>`

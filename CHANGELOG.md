@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- Removed the `<client_command type="flash_hardware"/>` line from `config.default.yml` (standalone
+  profile). This command does not exist in the Focusrite Control API for Scarlett (2nd/3rd Gen) devices. The
+  Focusrite Control Server automatically persists every `<set>` change to the hardware at all times — there is no
+  separate "flash" or "save to hardware" step. The official Focusrite Control user guides confirm this behaviour.
+  Documented in `docs/focusrite_control_api/focusrite_control_api.md` (new pitfall point 6 in the "Common pitfalls
+  and behaviors" section).
+
 ### Fixed
 - Fixed `focusrite_switcher.py` failing with `[Errno 32] Broken pipe` on the second `<set>` command whenever
   the first command triggers a routing-profile change (e.g. `<item id="6" value="8 Channel Analogue"/>`).

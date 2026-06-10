@@ -11,4 +11,3 @@ profiles:
         - '<set devid="{{devid}}"><item id="6" value="System Playback"/></set>'
     standalone:
         - '<set devid="{{devid}}"><item id="6" value="8 Channel Analogue"/></set>'
-        #- '<client_command type="flash_hardware"/>'
