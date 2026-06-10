@@ -19,13 +19,20 @@ response with the current state of the device.
 
 ## How to read available device options from handshake response
 
-In [device-arrival.xml](xml/scarlett-18i8-2nd-gen/device-arrival.xml) you can find a list of available options which
-we can use to control the device.
+In [device-arrival.xml](xml/scarlett-18i8-2nd-gen/device-arrival.xml) you can find a list of connected devices (usually only one) including the basic device
+information like including a list of all available device inputs and options which we can control:
 
-In [set.xml](xml/scarlett-18i8-2nd-gen/set.xml) we can find the full state dump with the current values for all the
+        <device-arrival>
+            <device id="1" protocol="USB" model="Scarlett 18i8 (2nd Gen)" class="Scarlett" bus-id="0"
+                serial-number="47574" version="2">
+                <!-- list device options here ... -->
+            </device>
+        </device-arrival>
+
+And in [set.xml](xml/scarlett-18i8-2nd-gen/set.xml) we can find the full state dump with the current values for all the
 available options.
 
-For example, within `device-arrival.xml` we can find the definition of the `Analogue 1` input which looks like this:
+Here is an example, how the definition of the `Analogue 1` input looks like in `device-arrival.xml`:
 
         <analogue id="795" supports-talkback="false" hidden="false" name="Analogue 1" stereo-name="Analogue 1-2">
             <available id="797"/>
@@ -108,6 +115,32 @@ Common pitfalls and behaviors:
     the `subscribe="true"` subscription and the `<set>`/`<item>` syntax were all already correct - the values only
     stayed unchanged because the response reported `authorised="false"`.)
 5. **Higher delay/timeout** might be required for loading one of the built-in routing presets.
+6. **Device id (`devid`) is dynamic — always read it from `device-arrival`:** The `devid` attribute used in
+    `<device-subscribe devid="N" subscribe="true"/>` and every `<set devid="N">` command is **not** a fixed
+    constant.  Although `id="1"` is common, the server can assign a different value (e.g. `id="2"`) after a USB
+    re-enumeration or a service restart. Using a hard-coded `devid="1"` in that situation causes all `<set>`
+    commands to silently fail. Always parse the `id` attribute of the `<device>` child of `<device-arrival>` from
+    the handshake response and use that value as `devid` in every subsequent command. For more information, please see
+    the "How to Determine the Device Id" section below.
+
+
+### How to Determine the Device Id (`devid`)
+
+Every `<device-subscribe>` and `<set>` command contains a `devid="N"` attribute that tells the server which
+physical device the command targets. The server assigns this id when the device is registered and reports it inside
+the `<device-arrival>` response that arrives immediately after the handshake:
+
+    <device-arrival>
+        <device id="2" protocol="USB" model="Scarlett 18i8 (2nd Gen)" class="Scarlett" bus-id="0"
+                serial-number="47574" version="2">
+            …
+        </device>
+    </device-arrival>
+
+The `id` attribute of the `<device>` element directly inside `<device-arrival>` is the `devid` to use. In the
+example above it is `"2"`, not `"1"`. Although `"1"` is the most common value, the server can assign a different
+id after a USB re-enumeration or a service restart, and using a stale hard-coded value causes all `<set>` commands
+to silently fail.
 
 
 ### How to Control Input Volume (Gain)

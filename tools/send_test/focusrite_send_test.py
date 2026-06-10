@@ -45,24 +45,10 @@ def frame(xml: str) -> str:
 def send_test(host="192.168.5.27", port=49673):
     # 1. Build the core XML command strings
     xml_handshake = '<client-details hostname="focusrite-tools" client-key="12345678"/>'
-    xml_subscribe = '<device-subscribe devid="1" subscribe="true"/>'
     xml_keepalive = '<keep-alive/>'
 
-    # Example: Switch to preset '8 Channel Analogue'
-    xml_command1 = '<set devid="1"><item id="6" value="8 Channel Analogue"/></set>'
-
-    # Example: SET Analogue 1 Mode to 'Inst'
-    xml_command2 = '<set devid="1"><item id="799" value="Inst"/></set>'
-
-    # Example: SET Mix A Input 1 Gain to -10.0 dB
-    xml_command3 = '<set devid="1"><item id="55" value="-10.0"/></set>'
-
     payload_handshake = frame(xml_handshake)
-    payload_subscribe = frame(xml_subscribe)
     payload_keepalive = frame(xml_keepalive)
-    payload_command1 = frame(xml_command1)
-    payload_command2 = frame(xml_command2)
-    payload_command3 = frame(xml_command3)
 
     print(f"Connecting to Focusrite Control Server on {host}:{port}...")
     try:
@@ -75,24 +61,74 @@ def send_test(host="192.168.5.27", port=49673):
             s.sendall(payload_handshake.encode('utf-8'))
             time.sleep(0.5)
 
+            # Read the initial response to obtain the device-arrival element and parse the device id.
+            # The server may send client-details + device-arrival as one or two separate TCP writes.
+            handshake_response = b""
+            handshake_start = time.time()
+            while time.time() - handshake_start < 2.0:
+                try:
+                    s.setblocking(False)
+                    chunk = s.recv(16384)
+                    if chunk:
+                        handshake_response += chunk
+                        handshake_start = time.time()
+                    else:
+                        break
+                except (BlockingIOError, socket.error):
+                    if handshake_response and (time.time() - handshake_start > 0.3):
+                        break
+                    time.sleep(0.05)
+            s.setblocking(True)
+
+            # Parse the actual device id from the device-arrival element so that all subsequent
+            # subscribe and <set> commands target the correct device regardless of the id assigned
+            # by the server (it may be "2" or higher instead of the expected "1").
+            # NOTE: the regex must match <device id="N" directly (not bus-id="0" or other
+            # attributes that contain "id=" inside the same tag).
+            handshake_text = handshake_response.decode('utf-8', errors='ignore')
+            # Primary: <device-arrival ...><device id="N"  (most specific, avoids false positives)
+            devid_match = re.search(r'<device-arrival[^>]*>\s*<device\s+id="(\d+)"', handshake_text)
+            if not devid_match:
+                # Fallback: bare <device id="N" anywhere (no preceding attributes that could confuse)
+                devid_match = re.search(r'<device\s+id="(\d+)"', handshake_text)
+            if devid_match:
+                devid = devid_match.group(1)
+            else:
+                devid = "1"
+                print("WARNING: Could not parse device id from server response. "
+                      "Falling back to '1'. Commands may fail if the server uses a different id.")
+            print(f"Device id from server: {devid}")
+
+            # Build device-specific command strings using the detected devid.
+            xml_subscribe = f'<device-subscribe devid="{devid}" subscribe="true"/>'
+
+            # Example: Switch to preset '8 Channel Analogue'
+            xml_command1 = f'<set devid="{devid}"><item id="6" value="8 Channel Analogue"/></set>'
+
+            # Example: SET Analogue 1 Mode to 'Inst'
+            xml_command2 = f'<set devid="{devid}"><item id="799" value="Inst"/></set>'
+
+            # Example: SET Mix A Input 1 Gain to -10.0 dB
+            xml_command3 = f'<set devid="{devid}"><item id="55" value="-10.0"/></set>'
+
             # Subscribing to the device. This is REQUIRED before the server will accept any `<set>` command.
             print("Sending device-subscribe...")
-            s.sendall(payload_subscribe.encode('utf-8'))
+            s.sendall(frame(xml_subscribe).encode('utf-8'))
             time.sleep(0.5)
 
             # Sending command1
             print(f"Sending command1: {xml_command1}")
-            s.sendall(payload_command1.encode('utf-8'))
+            s.sendall(frame(xml_command1).encode('utf-8'))
             time.sleep(0.5)
 
             # Sending command2
             print(f"Sending command2: {xml_command2}")
-            s.sendall(payload_command2.encode('utf-8'))
+            s.sendall(frame(xml_command2).encode('utf-8'))
             time.sleep(0.5)
 
             # Sending command3
             print(f"Sending command3: {xml_command3}")
-            s.sendall(payload_command3.encode('utf-8'))
+            s.sendall(frame(xml_command3).encode('utf-8'))
             time.sleep(0.5)
 
             # Sending keep-alive (which will give us the current state of the device)

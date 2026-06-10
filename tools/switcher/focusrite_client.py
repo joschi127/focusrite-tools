@@ -1,3 +1,4 @@
+import re
 import socket
 import time
 
@@ -25,6 +26,42 @@ import time
 
 DEFAULT_HANDSHAKE_HOSTNAME = "focusrite-tools"
 DEFAULT_CLIENT_KEY = "12345678"
+DEVICE_ID_FALLBACK = "1"
+
+
+def parse_device_id(response):
+    """Extract the device id from a ``device-arrival`` server response.
+
+    Looks for the ``<device-arrival><device id="N" .../>`` element and returns the top-level
+    device ``id`` attribute as a string.  The search is intentionally narrow:
+
+    1. First tries ``<device-arrival … ><device id="N"`` (most specific – avoids false positives
+       from other ``<device-…>`` elements or attributes like ``bus-id="0"`` in the same tag).
+    2. Falls back to a bare ``<device id="N"`` match (handles non-standard server responses).
+
+    Returns ``DEVICE_ID_FALLBACK`` (``"1"``) and prints a warning when no match is found so
+    that callers can always use the return value without extra ``None``-checks.
+
+    Args:
+        response: raw server response as ``bytes`` or ``str``.
+    Returns:
+        Device id string, e.g. ``"1"`` or ``"2"``.
+    """
+    if isinstance(response, bytes):
+        response = response.decode("utf-8", errors="ignore")
+    # Primary: find <device id="N" directly inside a <device-arrival> element.
+    match = re.search(r'<device-arrival[^>]*>\s*<device\s+id="(\d+)"', response)
+    if match:
+        return match.group(1)
+    # Fallback: bare <device id="N" anywhere in the response (no other attributes before id=).
+    match = re.search(r'<device\s+id="(\d+)"', response)
+    if match:
+        return match.group(1)
+    print(
+        "WARNING: parse_device_id – could not find device id in server response. "
+        "Falling back to '{}'. Commands may fail if the server uses a different id.".format(
+            DEVICE_ID_FALLBACK))
+    return DEVICE_ID_FALLBACK
 
 
 def frame(xml):
@@ -99,7 +136,11 @@ class FocusriteClient:
     # -- Protocol steps ---------------------------------------------------------------------------------
 
     def handshake(self, wait=0.5):
-        """Send the client-details handshake. Returns the (possibly empty) initial server response."""
+        """Send the client-details handshake. Returns the (possibly empty) initial server response.
+
+        The response typically contains a ``<device-arrival>`` element from which the active device
+        id can be read with :func:`parse_device_id`.
+        """
         xml = '<client-details hostname="{}" client-key="{}"/>'.format(self.hostname, self.client_key)
         self._send(xml)
         if wait:

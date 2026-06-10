@@ -1,3 +1,4 @@
+import re
 import sys
 import os
 import time
@@ -5,7 +6,7 @@ import random
 
 import yaml
 
-from focusrite_client import FocusriteClient, FocusriteClientError, find_active_server_port
+from focusrite_client import FocusriteClient, FocusriteClientError, find_active_server_port, parse_device_id
 
 try:
     import win32gui
@@ -154,6 +155,7 @@ def execute_commands(port, command_list):
         with FocusriteClient(HOST, port, timeout=5.0, client_key=CLIENT_KEY) as client:
             # 1. Handshake. The response carries the approval state; while authorised="false" the server
             #    silently ignores every <set> until the client is trusted in the Focusrite Control app.
+            #    It also carries the device-arrival element with the actual device id.
             handshake_response = client.handshake()
             if b'authorised="false"' in handshake_response:
                 show_warning(
@@ -162,20 +164,28 @@ def execute_commands(port, command_list):
                     "desktop application.")
                 sys.exit(1)
 
-            # 2. Subscribe to the device. REQUIRED before the server accepts any <set> command.
-            client.subscribe(devid="1")
+            # 2. Determine the actual device id from the device-arrival response so that the subscribe
+            #    and <set> commands target the right device even when the server assigns an id != "1".
+            devid = parse_device_id(handshake_response)
+            print(f" -> Device id from server: {devid}")
 
-            # 3. Send the actual commands. <set> commands intentionally return no direct response and we
-            #    do NOT read after each one - reading mid-stream interrupts the server's reconfiguration
-            #    (this is what made routing-profile switches like "System Playback" fail).
+            # 3. Subscribe to the device. REQUIRED before the server accepts any <set> command.
+            client.subscribe(devid=devid)
+
+            # 4. Send the actual commands. Replace any hardcoded devid in the command strings with the
+            #    id received from the server, then send them. We do NOT read after each one - reading
+            #    mid-stream interrupts the server's reconfiguration (this is what made routing-profile
+            #    switches like "System Playback" fail).
             for cmd in command_list:
                 if not cmd:
                     continue
 
+                # Substitute the placeholder devid ("1") in the command with the actual server devid.
+                cmd = re.sub(r'devid="\d+"', f'devid="{devid}"', cmd)
                 print(f"Sending command: {cmd}")
                 client.send_command(cmd)
 
-            # 4. Read the server response ONCE after all commands have been sent, exactly like the standalone
+            # 5. Read the server response ONCE after all commands have been sent, exactly like the standalone
             #    test script does. A connection reset here is an expected side effect of a routing-profile
             #    change, so we tolerate it instead of failing.
             try:

@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Fixed device id always resolving to `"0"` instead of the correct value (e.g. `"2"`) when parsing the
+  `<device-arrival>` handshake response. The previous regex `<device[^>]+\bid="(\d+)"` was greedy: it skipped
+  past the correct `id="2"` attribute on `<device id="2" … bus-id="0" …>` and matched the `bus-id="0"` attribute
+  instead (because `-` is a non-word character, giving `\b` a false boundary immediately before `id`). Fixed by
+  using the more specific pattern `<device-arrival[^>]*>\s*<device\s+id="(\d+)"` (primary) with a bare
+  `<device\s+id="(\d+)"` as fallback, and added an explicit console warning when the fallback fires so that
+  future regressions are immediately visible. Applied to both `parse_device_id()` in `focusrite_client.py` and
+  the inline parsing in `focusrite_send_test.py`. Verified live against the real Scarlett 18i8 server — device
+  id is now correctly read as `"2"` and all commands are sent with `devid="2"`.
+- Fixed all commands failing when the Focusrite Control Server registers the device with an id other than `"1"`
+  (e.g. `id="2"`). Both `focusrite_send_test.py` and `focusrite_switcher.py` / `focusrite_client.py` now read the
+  `<device-arrival>` element from the handshake response and dynamically use the reported device id for all
+  subsequent `<device-subscribe>` and `<set devid="...">` commands instead of the previously hardcoded `"1"`.
+  A new helper `parse_device_id(response)` in `focusrite_client.py` centralises this parsing and falls back to
+  `"1"` when no `<device>` element is found (keeps backward-compatibility with servers that omit the element).
 - Fixed: In `load_config`, when `config.default.yml` could not be loaded, throw a fatal error including the path
   of the file which could not be found or read.
 - Fixed `KeyError: 'host'` when running the compiled `focusrite_switcher.exe` on Windows. The application was
@@ -28,6 +43,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   logged as a fatal error and exiting.
 
 ### Added
+- Documented the dynamic device id (`devid`) in `docs/focusrite_control_api/focusrite_control_api.md`: added a new
+  "How to Determine the Device Id" section explaining that the `id` attribute of the `<device>` element inside
+  `<device-arrival>` is the `devid` to use in all subsequent `<device-subscribe>` and `<set>` commands, that it is
+  not always `"1"`, and included a parsing tip to avoid matching `bus-id` and similar attributes by mistake. Also
+  added point 6 to the "Common pitfalls and behaviors" list with the same guidance.
 - Added MIT LICENSE file to the project root.
 - Documented two additional Focusrite Control Server behaviors in
   `docs/focusrite_control_api/focusrite_control_api.md`: a `<set>` command produces no per-command reply (the
