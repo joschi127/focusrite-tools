@@ -107,15 +107,7 @@ Common pitfalls and behaviors:
     the very same `<set>` commands take effect immediately. (Verified live against a real Scarlett 18i8 server: framing,
     the `subscribe="true"` subscription and the `<set>`/`<item>` syntax were all already correct - the values only
     stayed unchanged because the response reported `authorised="false"`.)
-5. **`<set>` produces no per-command reply:** A successful `<set>` command does **not** generate its own
-    direct response. The server applies the change silently and only reflects the new value in its periodic
-    state dump (the `set` response). Therefore an empty/absent reply to a `<set>` is the **normal, successful
-    case** and must not be treated as an error. To confirm a change, send a `<keep-alive/>` afterwards and read
-    the resulting state dump rather than waiting for a response to the `<set>` itself.
-6. **Connection reset after a routing-profile change:** Changing the routing profile/preset
-    (`<set devid="1"><item id="6" value="..."/></set>`) makes the server briefly **reset the connection** while
-    it reconfigures the routing. A `Connection reset by peer` immediately after such a command is therefore an
-    **expected side effect**, not a failure - simply reconnect if further communication is needed.
+5. **Higher delay/timeout might be rewuired for loading one of the built-in routing presets.
 
 
 ### How to Control Input Volume (Gain)
