@@ -14,8 +14,8 @@ seamlessly handle transitions between active PC usage and standalone operations.
 - **Standalone Mode (Laptop Off/Disconnected) (`standalone`):** Switches the Scarlett to the "8 Channel Analogue"
     preset. This will route all 8 analogue inputs to the monitor and headphone outputs.
 
-On only the `standalone` profile will be flased to non-volatile memory (NVRAM). So when powering on the Scarlett,
-it will automatically fall back to this configuration and is ready to be used without powering on your computer.
+All profile changes are automatically persisted to the hardware at all times by the Focusrite Control Server —
+there is no separate "save to hardware" step required.
 
 ---
 
@@ -32,19 +32,6 @@ it will automatically fall back to this configuration and is ready to be used wi
     - `install.py` - Automated installer script for Windows deployment.
 - `requirements.txt` - Project dependencies.
 - `README.md` - This instruction file.
-
----
-
-## One-Time Hardware Preparation (Standalone Profile)
-(For Switcher tool)
-
-Before deploying the automated scripts, you must flash your preferred "Laptop-Off" routing preset directly into the
-Scarlett's physical memory:
-
-1. Launch the official **Focusrite Control** desktop application.
-2. Configure your mixing layouts exactly how you want them to behave in standalone mode (e.g., load the built-in
-    **"8 Channel Analogue"** preset so all line inputs route straight to your main monitor outputs).
-3. Close Focusrite Control. This will automatically write the current routing preference into the hardware's NVRAM.
 
 ---
 

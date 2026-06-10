@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   separate "flash" or "save to hardware" step. The official Focusrite Control user guides confirm this behaviour.
   Documented in `docs/focusrite_control_api/focusrite_control_api.md` (new pitfall point 6 in the "Common pitfalls
   and behaviors" section).
+- Removed the incorrect "One-Time Hardware Preparation" section and the NVRAM/flash paragraph from `README.md`.
+  The Focusrite Control Server automatically persists all routing changes to hardware at all times; no separate
+  flash or save step exists or is needed.
 
 ### Fixed
 - Fixed `focusrite_switcher.py` failing with `[Errno 32] Broken pipe` on the second `<set>` command whenever
