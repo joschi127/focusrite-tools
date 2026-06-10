@@ -181,7 +181,7 @@ def execute_commands(port, command_list):
                     continue
 
                 # Substitute the placeholder devid ("1") in the command with the actual server devid.
-                cmd = re.sub(r'devid="\d+"', f'devid="{devid}"', cmd)
+                cmd = re.sub(r'{{devid}}', f'{devid}', cmd)
                 print(f"Sending command: {cmd}")
                 client.send_command(cmd)
 
