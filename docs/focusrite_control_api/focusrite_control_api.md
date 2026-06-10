@@ -191,7 +191,9 @@ as listed above. For example, to load the `8 Channel Analogue` preset:
 
         <set devid="1"><item id="6" value="8 Channel Analogue"/></set>
 
-Please note: For some reason the current value of `id="6"` is not reported in the full state dump (`set.xml`).
+Please note: The current value of the active preset (value für `id="6"`) is not reported in the full state dump
+(`set.xml`). Probably because it is just a preset, which will load a default config for all the other values but it
+is actually not a real value itself.
 
 The same framing, `<device-subscribe devid="1" subscribe="true"/>` subscription and client approval requirements
 described above apply here as well.
