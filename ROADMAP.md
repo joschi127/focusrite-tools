@@ -2,6 +2,8 @@
 
 ## Open Issues
 - [ ] Fix port probe which is currently sometimes detecting port 49672 though it should be 49672.
+- [ ] Move switcher related documentation from the root folder README.md to a dedicated README.md within the
+  `tools/switcher/` folder.
 
 ## Current Goals
 - [x] Restructure project into `focusrite-tools` to accommodate multiple utilities.
