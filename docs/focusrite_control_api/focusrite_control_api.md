@@ -127,7 +127,7 @@ For example, in `Mix A` (id `54`), you can find the gain control for the first i
             </input>
         </mix>
 
-So to set the gain of `Mix A` input 1 to -10 dB, we send the following XML payload (using the correct framing and
+So to set the gain of `Mix A` input 1 to `-10` dB, we send the following XML payload (using the correct framing and
 **after** having subscribed to the device via `<device-subscribe devid="1" subscribe="true"/>`):
 
         <set devid="1"><item id="55" value="-10.0"/></set>
