@@ -107,7 +107,7 @@ Common pitfalls and behaviors:
     the very same `<set>` commands take effect immediately. (Verified live against a real Scarlett 18i8 server: framing,
     the `subscribe="true"` subscription and the `<set>`/`<item>` syntax were all already correct - the values only
     stayed unchanged because the response reported `authorised="false"`.)
-5. **Higher delay/timeout might be rewuired for loading one of the built-in routing presets.
+5. **Higher delay/timeout** might be required for loading one of the built-in routing presets.
 
 
 ### How to Control Input Volume (Gain)
