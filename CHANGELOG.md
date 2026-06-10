@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Fixed `focusrite_switcher.py` failing with `[Errno 32] Broken pipe` on the second `<set>` command whenever
+  the first command triggers a routing-profile change (e.g. `<item id="6" value="8 Channel Analogue"/>`).
+  Root cause: `FocusriteClient.subscribe()` called `_drain()` after sending `<device-subscribe>`, which read the
+  ~120 KB full-state dump that the server pushes immediately after subscription. Consuming this dump caused the
+  server to close the TCP connection as soon as it finished applying the first routing change. Fixed by removing
+  the `_drain()` call from `subscribe()` — it now just sends the subscribe frame and sleeps, exactly as the
+  reference `focusrite_send_test.py` does. The deferred state dump is collected together with the command
+  responses by the final `receive()` call at the end of `execute_commands()`. Verified live against the real
+  Scarlett 18i8 server: all three profile commands now succeed and ~58 KB of device state is returned.
 - Fixed device id always resolving to `"0"` instead of the correct value (e.g. `"2"`) when parsing the
   `<device-arrival>` handshake response. The previous regex `<device[^>]+\bid="(\d+)"` was greedy: it skipped
   past the correct `id="2"` attribute on `<device id="2" … bus-id="0" …>` and matched the `bus-id="0"` attribute

@@ -148,12 +148,19 @@ class FocusriteClient:
         return self._drain()
 
     def subscribe(self, devid="1", wait=0.5):
-        """Subscribe to a device. REQUIRED before the server accepts any `<set>` command for it."""
+        """Subscribe to a device. REQUIRED before the server accepts any `<set>` command for it.
+
+        IMPORTANT: we intentionally do NOT drain the socket here. After a `<device-subscribe>` the
+        server sends a large full-state dump (~100 KB). Reading it triggers the server to reset the
+        subscription context, which causes the server to close the TCP connection as soon as the
+        first `<set>` command is processed. By skipping the drain the state dump remains buffered
+        in the OS receive buffer and is collected together with the command responses by the final
+        `receive()` call — exactly as the reference send_test script does.
+        """
         xml = '<device-subscribe devid="{}" subscribe="true"/>'.format(devid)
         self._send(xml)
         if wait:
             time.sleep(wait)
-        return self._drain()
 
     def send_command(self, xml, wait=0.5):
         """Send a single raw XML command (e.g. a `<set>` element).
