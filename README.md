@@ -49,6 +49,7 @@ Scarlett's physical memory:
 ---
 
 ## ?? Installation & Deployment
+(For Switcher tool)
 
 Because Windows safeguards system directories (`C:\Program Files`) and requires elevated permissions for the Task
 Scheduler API, you must run the installation locally via an Administrator terminal.
