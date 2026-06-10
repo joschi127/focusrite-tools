@@ -195,5 +195,5 @@ Please note: The current value of the active preset (value für `id="6"`) is not
 (`set.xml`). Probably because it is just a preset, which will load a default config for all the other values but it
 is actually not a real value itself.
 
-The same framing, `<device-subscribe devid="1" subscribe="true"/>` subscription and client approval requirements
+The same framing, `<device-subscribe devid="1" subscribe="true"/>` subscription and client approval requirements as
 described above apply here as well.
